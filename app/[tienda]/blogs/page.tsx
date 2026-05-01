@@ -93,7 +93,7 @@ export default function BlogsPage() {
             </p>
             {usuario && (
               <a
-                href="/pre-cliente/edit-blogs"
+                href="/mi-tienda/edit-blogs"
                 className="inline-flex items-center gap-2 mt-6 px-6 py-3 rounded-lg transition-colors"
                 style={{ backgroundColor: currentColors.buttonBg, color: currentColors.buttonText }}
               >

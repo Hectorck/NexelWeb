@@ -188,7 +188,7 @@ export default function CartPage() {
 								<span className="material-icons-round text-6xl opacity-30" style={{ color: currentColors.textPrimary }}>shopping_bag</span>
 								<h3 className="text-xl font-semibold mt-4" style={{ color: currentColors.textPrimary }}>Carrito vacío</h3>
 								<p className="text-sm opacity-70 mt-2" style={{ color: currentColors.textSecondary }}>Agrega productos para comenzar tu compra</p>
-								<a href="/pre-cliente/inventario" className="inline-block mt-4 px-6 py-2 rounded-lg transition-colors" style={{ backgroundColor: currentColors.accentColor || '#7b68ee', color: 'white' }}>
+								<a href="/mi-tienda/inventario" className="inline-block mt-4 px-6 py-2 rounded-lg transition-colors" style={{ backgroundColor: currentColors.accentColor || '#7b68ee', color: 'white' }}>
 									<span className="material-icons-round text-sm mr-2">shopping_cart</span>
 									Continuar comprando
 								</a>
@@ -285,7 +285,7 @@ export default function CartPage() {
 									)}
 
 									<a 
-										href="/pre-cliente/inventario" 
+										href="/mi-tienda/inventario" 
 										className="w-full block text-center px-4 py-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
 										style={{ borderColor: currentColors.borderColor }}
 									>

@@ -92,7 +92,7 @@ export default function RegistroPage() {
       );
 
       if (role === "pre-cliente") {
-        router.push("/pre-cliente");
+        router.push("/mi-tienda");
       } else {
         router.push("/cliente/dashboard");
       }
