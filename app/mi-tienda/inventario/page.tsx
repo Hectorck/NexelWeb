@@ -45,11 +45,32 @@ export default function AdminInventario() {
     return { total, conStock, pocoStock, sinStock };
   }, [productos]);
 
+  // Cargar tiendas del usuario
+  useEffect(() => {
+    if (!usuario?.uid) return;
+    const cargarTiendas = async () => {
+      setTiendaLoading(true);
+      try {
+        const tiendasData = await obtenerTiendasUsuario(usuario.uid);
+        setTiendas(tiendasData);
+      } catch (err) {
+        console.error("Error cargando tiendas:", err);
+      } finally {
+        setTiendaLoading(false);
+      }
+    };
+    cargarTiendas();
+  }, [usuario?.uid]);
+
   useEffect(() => {
     if (!usuario?.uid) return;
     crearBodegaDefaultUsuario(usuario.uid).catch(console.error);
     cargarProductos();
   }, [usuario?.uid]);
+
+  // Obtener la tienda actual (la primera por ahora)
+  const tiendaActual = tiendas.length > 0 ? tiendas[0] : null;
+  const tiendaId = tiendaActual?.id;
 
   if (!usuario || !currentColors) {
     return (
@@ -355,7 +376,7 @@ export default function AdminInventario() {
         )}
 
         {vista === "marcas" && <MarcasAdminPanel usuarioId={usuario!.uid} />}
-        {vista === "categorias" && <CategoriasAdminPanel usuarioId={usuario!.uid} />}
+        {vista === "categorias" && <CategoriasAdminPanel usuarioId={usuario!.uid} tiendaId={tiendaId} />}
         {vista === "bodegas" && <BodegasAdminPanel />}
       </div>
     </div>

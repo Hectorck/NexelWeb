@@ -8,17 +8,9 @@ import { useTheme } from "@/lib/ThemeContext";
 import { useUser } from "../context/UserContext";
 import { useTiendaContext } from "@/lib/TiendaContext";
 import ProductoCard from "@/app/components/ProductoCard";
-import {
-  obtenerTiendasUsuario,
-  crearTienda,
-  cerrarSesion,
-  obtenerLimitesPreCliente,
-  obtenerProductosUsuario,
-  obtenerCategoriasUsuario,
-  obtenerLogo,
-} from "@/lib/firebaseService";
+import { obtenerProductosUsuario, obtenerTiendasUsuario, obtenerLogo } from "@/lib/firebaseService";
 import { obtenerProductos } from "@/lib/productos-db";
-import { obtenerCategorias } from "@/lib/categorias-db";
+import { obtenerCategorias, obtenerCategoriasUsuario } from "@/lib/categorias-db";
 import { Tienda } from "@/lib/types";
 import type { Producto } from "@/lib/productos-db";
 
@@ -31,6 +23,7 @@ export default function PreClienteDashboard({ params }: { params: { tienda: stri
 
   const [tiendas, setTiendas] = useState<Tienda[]>([]);
   const [loadingData, setLoadingData] = useState(true);
+  const [tiendaActual, setTiendaActual] = useState<Tienda | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [nombreTienda, setNombreTienda] = useState("");
   const [descripcion, setDescripcion] = useState("");
@@ -65,21 +58,29 @@ export default function PreClienteDashboard({ params }: { params: { tienda: stri
   const cargarDatos = async () => {
     setLoadingData(true);
     try {
-      const [tiendasData, productosData, categoriasData, logoUrl] = await Promise.all([
-        obtenerTiendasUsuario(usuario!.uid),
-        obtenerProductosUsuario(usuario!.uid),
-        obtenerCategoriasUsuario(),
-        obtenerLogo(usuario!.uid),
-      ]);
+      const tiendasData = await obtenerTiendasUsuario(usuario!.uid);
       setTiendas(tiendasData);
-      setHasProducts(productosData && productosData.length > 0);
-      setHasCategories(categoriasData && categoriasData.length > 0);
-      setHasLogo(!!logoUrl);
-      const configured = !!logoUrl && categoriasData?.length > 0 && productosData?.length > 0;
-      setAllConfigured(configured);
-      if (tiendasData.length > 0 && logoUrl) {
-        await cargarProductosTienda();
-        await cargarCategorias();
+      
+      if (tiendasData.length > 0) {
+        const tiendaActualData = tiendasData[0];
+        setTiendaActual(tiendaActualData);
+        
+        const [productosData, categoriasData, logoUrl] = await Promise.all([
+          obtenerProductosUsuario(usuario!.uid),
+          obtenerCategoriasUsuario(usuario!.uid, tiendaActualData.id),
+          obtenerLogo(usuario!.uid),
+        ]);
+        
+        setHasProducts(productosData && productosData.length > 0);
+        setHasCategories(categoriasData && categoriasData.length > 0);
+        setHasLogo(!!logoUrl);
+        const configured = !!logoUrl && categoriasData?.length > 0 && productosData?.length > 0;
+        setAllConfigured(configured);
+        
+        if (logoUrl) {
+          await cargarProductosTienda();
+          await cargarCategorias();
+        }
       }
     } catch (error) {
       console.error("Error cargando datos:", error);
@@ -103,7 +104,9 @@ export default function PreClienteDashboard({ params }: { params: { tienda: stri
 
   const cargarCategorias = async () => {
     try {
-      const cats = await obtenerCategorias();
+      if (!tiendaActual) return;
+      
+      const cats = await obtenerCategoriasUsuario(usuario!.uid, tiendaActual.id);
       const catObj: any = {};
       const subcatObj: any = {};
       const subsubcatObj: any = {};

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { obtenerCategorias, obtenerCategoriasUsuario, guardarCategoria, actualizarCategoria, eliminarCategoria } from "@/lib/categorias-db";
+import { obtenerCategorias, obtenerCategoriasUsuario, guardarCategoria, actualizarCategoria, eliminarCategoria, guardarCategoriaUsuario, actualizarCategoriaUsuario, eliminarCategoriaUsuario } from "@/lib/categorias-db";
 import { getCategoryIcon } from "@/app/components/Icons";
+import { useTheme } from "@/lib/ThemeContext";
 
 export type Categoria = {
   id: string;
@@ -87,7 +88,8 @@ function moveCategoria(categorias: Categoria[], sourcePath: number[], destPath: 
   return copy;
 }
 
-export default function CategoriasAdminPanel({ onCategoriasChange, usuarioId }: { onCategoriasChange?: (cats: Categoria[]) => void; usuarioId: string }) {
+export default function CategoriasAdminPanel({ onCategoriasChange, usuarioId, tiendaId }: { onCategoriasChange?: (cats: Categoria[]) => void; usuarioId: string; tiendaId?: string }) {
+  const { currentColors } = useTheme();
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [nuevaCategoria, setNuevaCategoria] = useState("");
   const [nuevoIcono, setNuevoIcono] = useState("");
@@ -100,8 +102,8 @@ export default function CategoriasAdminPanel({ onCategoriasChange, usuarioId }: 
 
   // Cargar categorías desde Firestore
   useEffect(() => {
-    obtenerCategoriasUsuario(usuarioId).then(cats => setCategorias(cats || []));
-  }, [usuarioId]);
+    obtenerCategoriasUsuario(usuarioId, tiendaId).then(cats => setCategorias(cats || []));
+  }, [usuarioId, tiendaId]);
 
   // Notificar cambios
   useEffect(() => {
@@ -111,7 +113,7 @@ export default function CategoriasAdminPanel({ onCategoriasChange, usuarioId }: 
   const agregarCategoria = async () => {
     if (!nuevaCategoria.trim()) return;
     const nueva: Categoria = { id: Date.now().toString(), nombre: nuevaCategoria, icono: nuevoIcono.trim() || undefined, orden: categorias.length, subcategorias: [] };
-    await guardarCategoria(nueva, usuarioId);
+    await guardarCategoriaUsuario(nueva, usuarioId, tiendaId);
     setCategorias(prev => [...prev, nueva]);
     setNuevaCategoria("");
     setNuevoIcono("");
@@ -119,7 +121,7 @@ export default function CategoriasAdminPanel({ onCategoriasChange, usuarioId }: 
 
   const handleEliminarCategoria = async (cat: Categoria, nivel: number, parentPath: number[] = []) => {
     if (nivel === 1) {
-      await eliminarCategoria(cat.id);
+      await eliminarCategoriaUsuario(cat.id, usuarioId, tiendaId);
       setCategorias(prev => prev.filter(c => c.id !== cat.id));
     } else {
       setCategorias(prev => {
@@ -129,7 +131,7 @@ export default function CategoriasAdminPanel({ onCategoriasChange, usuarioId }: 
           pointer = pointer[parentPath[i]].subcategorias;
         }
         pointer.splice(parentPath[parentPath.length - 1], 1);
-        guardarCategoria(copy[parentPath[0]], usuarioId);
+        guardarCategoriaUsuario(copy[parentPath[0]], usuarioId, tiendaId);
         return copy;
       });
     }
@@ -158,12 +160,12 @@ export default function CategoriasAdminPanel({ onCategoriasChange, usuarioId }: 
       if (level === 1) {
         // Si reordena nivel 1, guardar ambos elementos movidos
         await Promise.all([
-          guardarCategoria(newCategorias[draggedPath.path[0]], usuarioId),
-          guardarCategoria(newCategorias[path[0]], usuarioId)
+          guardarCategoriaUsuario(newCategorias[draggedPath.path[0]], usuarioId, tiendaId),
+          guardarCategoriaUsuario(newCategorias[path[0]], usuarioId, tiendaId)
         ]);
       } else {
         // Si reordena nivel 2 o superior, guardar la categoría raíz con toda la estructura
-        await guardarCategoria(newCategorias[path[0]], usuarioId);
+        await guardarCategoriaUsuario(newCategorias[path[0]], usuarioId, tiendaId);
       }
     }
 
@@ -183,8 +185,8 @@ export default function CategoriasAdminPanel({ onCategoriasChange, usuarioId }: 
         copy[path[0]].nombre = newName.trim();
         categoriaActualizada = copy[path[0]];
         
-        // Para categorías raíz, guardar la categoría completa con usuarioId
-        guardarCategoria(categoriaActualizada, usuarioId);
+        // Para categorías raíz, guardar la categoría completa con usuarioId y tiendaId
+        guardarCategoriaUsuario(categoriaActualizada, usuarioId, tiendaId);
       } else {
         let pointer = copy;
         for (let i = 0; i < path.length - 1; i++) {
@@ -195,7 +197,7 @@ export default function CategoriasAdminPanel({ onCategoriasChange, usuarioId }: 
         
         // Para subcategorías, actualizar solo el campo nombre en la categoría raíz
         const categoriaRaiz = copy[path[0]];
-        actualizarCategoria(categoriaRaiz.id, categoriaRaiz);
+        actualizarCategoriaUsuario(categoriaRaiz.id, categoriaRaiz, usuarioId, tiendaId);
       }
 
       return copy;
@@ -230,18 +232,23 @@ export default function CategoriasAdminPanel({ onCategoriasChange, usuarioId }: 
               }}
               onDragLeave={() => JSON.stringify(dragOverPath) === JSON.stringify(path) && setDragOverPath(null)}
               className={`flex items-center gap-2 p-2 rounded transition-colors ${
-                isDragging ? 'opacity-50 bg-gray-200' : ''
-              } ${isDragOver ? 'bg-blue-200 border-2 border-blue-500' : 'bg-white'} ${
-                !isEditing && nivel < 3 ? 'cursor-move hover:bg-gray-50' : ''
-              }`}
+                isDragging ? 'opacity-50' : ''
+              } ${!isEditing && nivel < 3 ? 'cursor-move' : ''}`}
               style={{
                 borderRadius: '0.375rem',
-                border: isDragOver ? '2px solid rgb(59, 130, 246)' : '1px solid rgb(229, 231, 235)',
+                backgroundColor: isDragOver 
+                  ? (currentColors?.bgAccent || '#dbeafe') 
+                  : (currentColors?.bgPrimary || '#ffffff'),
+                border: isDragOver 
+                  ? `2px solid ${currentColors?.accentColor || '#2563eb'}` 
+                  : `1px solid ${currentColors?.borderColor || '#e5e7eb'}`,
+                opacity: isDragging ? 0.5 : 1
               }}
             >
               {cat.subcategorias && cat.subcategorias.length > 0 && (
                 <button
-                  className="mr-1 text-blue-700 focus:outline-none flex-shrink-0"
+                  className="mr-1 focus:outline-none flex-shrink-0"
+                  style={{ color: currentColors?.accentColor || '#2563eb' }}
                   onClick={() => setExpanded(exp => ({ ...exp, [key]: !exp[key] }))}
                   type="button"
                   disabled={isEditing}
@@ -252,7 +259,12 @@ export default function CategoriasAdminPanel({ onCategoriasChange, usuarioId }: 
                 </button>
               )}
               {nivel < 3 && !isEditing && (
-                <span className="text-sm text-gray-400 flex-shrink-0">{getCategoryIcon('drag_handle')}</span>
+                <span 
+                  className="text-sm flex-shrink-0"
+                  style={{ color: currentColors?.textSecondary || '#9ca3af' }}
+                >
+                  {getCategoryIcon('drag_handle')}
+                </span>
               )}
               
               {isEditing ? (
@@ -260,6 +272,11 @@ export default function CategoriasAdminPanel({ onCategoriasChange, usuarioId }: 
                   <input
                     type="text"
                     className="flex-1 border rounded px-2 py-1 text-sm"
+                    style={{
+                      backgroundColor: currentColors?.bgPrimary || '#ffffff',
+                      borderColor: currentColors?.borderColor || '#d1d5db',
+                      color: currentColors?.textPrimary || '#000000'
+                    }}
                     value={editingName}
                     onChange={(e) => setEditingName(e.target.value)}
                     onKeyPress={(e) => {
@@ -270,14 +287,22 @@ export default function CategoriasAdminPanel({ onCategoriasChange, usuarioId }: 
                     autoFocus
                   />
                   <button
-                    className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded hover:bg-green-200 flex-shrink-0"
+                    className="text-xs px-2 py-1 rounded flex-shrink-0"
+                    style={{
+                      backgroundColor: '#dcfce7',
+                      color: '#166534'
+                    }}
                     onClick={() => handleEditarNombre(path, editingName, nivel)}
                     type="button"
                   >
                     ✓
                   </button>
                   <button
-                    className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded hover:bg-gray-200 flex-shrink-0"
+                    className="text-xs px-2 py-1 rounded flex-shrink-0"
+                    style={{
+                      backgroundColor: currentColors?.bgSecondary || '#f3f4f6',
+                      color: currentColors?.textSecondary || '#6b7280'
+                    }}
                     onClick={() => {
                       setEditingPath(null);
                       setEditingName("");
@@ -289,9 +314,18 @@ export default function CategoriasAdminPanel({ onCategoriasChange, usuarioId }: 
                 </>
               ) : (
                 <>
-                  <span className="font-semibold text-black flex-1">{cat.nombre}</span>
+                  <span 
+                    className="font-semibold flex-1"
+                    style={{ color: currentColors?.textPrimary || '#000000' }}
+                  >
+                    {cat.nombre}
+                  </span>
                   <button
-                    className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded hover:bg-yellow-200 flex-shrink-0"
+                    className="text-xs px-2 py-1 rounded flex-shrink-0"
+                    style={{
+                      backgroundColor: '#fef3c7',
+                      color: '#92400e'
+                    }}
                     onClick={() => {
                       setEditingPath(key);
                       setEditingName(cat.nombre);
@@ -302,7 +336,8 @@ export default function CategoriasAdminPanel({ onCategoriasChange, usuarioId }: 
                     ✎
                   </button>
                   <button
-                    className="text-red-500 hover:text-red-700 font-bold flex-shrink-0"
+                    className="font-bold flex-shrink-0"
+                    style={{ color: '#dc2626' }}
                     onClick={() => handleEliminarCategoria(cat, nivel, path)}
                     type="button"
                   >
@@ -310,7 +345,11 @@ export default function CategoriasAdminPanel({ onCategoriasChange, usuarioId }: 
                   </button>
                   {nivel < 3 && (
                     <button
-                      className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded hover:bg-blue-200 flex-shrink-0"
+                      className="text-xs px-2 py-1 rounded flex-shrink-0"
+                      style={{
+                        backgroundColor: currentColors?.bgAccent || '#dbeafe',
+                        color: currentColors?.accentColor || '#1d4ed8'
+                      }}
                       onClick={async () => {
                         const nombre = prompt(`Nombre de la ${nivel === 1 ? "subcategoría" : "subsubcategoría"} para ${cat.nombre}`);
                         if (nombre && nombre.trim()) {
@@ -320,7 +359,7 @@ export default function CategoriasAdminPanel({ onCategoriasChange, usuarioId }: 
                             subcategorias: nivel === 1 ? [] : undefined 
                           });
                           setCategorias(newCat);
-                          await guardarCategoria(newCat[path[0]], usuarioId);
+                          await guardarCategoriaUsuario(newCat[path[0]], usuarioId, tiendaId);
                         }
                       }}
                     >
@@ -340,14 +379,35 @@ export default function CategoriasAdminPanel({ onCategoriasChange, usuarioId }: 
   );
 
   return (
-    <div className="max-w-2xl mx-auto bg-white rounded-xl shadow p-6">
-      <h2 className="text-xl font-bold mb-2 text-blue-700">Gestión de Categorías</h2>
-      <p className="text-sm text-gray-600 mb-4">Arrastra las categorías para reordenarlas. Las subcategorías solo pueden moverse dentro de su categoría padre. Haz clic en el botón ✎ para editar nombres.</p>
+    <div 
+      className="max-w-2xl mx-auto rounded-xl shadow p-6"
+      style={{ 
+        backgroundColor: currentColors?.bgPrimary || '#ffffff',
+        color: currentColors?.textPrimary || '#000000'
+      }}
+    >
+      <h2 
+        className="text-xl font-bold mb-2"
+        style={{ color: currentColors?.accentColor || '#2563eb' }}
+      >
+        Gestión de Categorías
+      </h2>
+      <p 
+        className="text-sm mb-4"
+        style={{ color: currentColors?.textSecondary || '#6b7280' }}
+      >
+        Arrastra las categorías para reordenarlas. Las subcategorías solo pueden moverse dentro de su categoría padre. Haz clic en el botón ✎ para editar nombres.
+      </p>
       
       <div className="flex gap-2 mb-4 flex-wrap">
         <input
           type="text"
           className="flex-1 border rounded px-3 py-2 min-w-[200px]"
+          style={{
+            backgroundColor: currentColors?.bgPrimary || '#ffffff',
+            borderColor: currentColors?.borderColor || '#d1d5db',
+            color: currentColors?.textPrimary || '#000000'
+          }}
           placeholder="Nueva categoría..."
           value={nuevaCategoria}
           onChange={e => setNuevaCategoria(e.target.value)}
@@ -356,6 +416,11 @@ export default function CategoriasAdminPanel({ onCategoriasChange, usuarioId }: 
         <input
           type="text"
           className="w-32 border rounded px-3 py-2"
+          style={{
+            backgroundColor: currentColors?.bgPrimary || '#ffffff',
+            borderColor: currentColors?.borderColor || '#d1d5db',
+            color: currentColors?.textPrimary || '#000000'
+          }}
           placeholder="Icono (opcional)"
           value={nuevoIcono}
           onChange={e => setNuevoIcono(e.target.value)}
@@ -363,15 +428,29 @@ export default function CategoriasAdminPanel({ onCategoriasChange, usuarioId }: 
           title="Nombre del icono de Material Icons"
         />
         <button
-          className="bg-blue-700 text-white px-4 py-2 rounded font-bold hover:bg-blue-800"
+          className="px-4 py-2 rounded font-bold"
+          style={{
+            backgroundColor: currentColors?.accentColor || '#2563eb',
+            color: '#ffffff'
+          }}
           onClick={agregarCategoria}
         >
           Agregar
         </button>
       </div>
       
-      <div className="border rounded-lg p-4 bg-gray-50">
-        {categorias.length > 0 ? renderCategorias(categorias) : <p className="text-gray-500">No hay categorías. Agrega una nueva.</p>}
+      <div 
+        className="border rounded-lg p-4"
+        style={{
+          backgroundColor: currentColors?.bgSecondary || '#f9fafb',
+          borderColor: currentColors?.borderColor || '#d1d5db'
+        }}
+      >
+        {categorias.length > 0 ? renderCategorias(categorias) : (
+          <p style={{ color: currentColors?.textSecondary || '#6b7280' }}>
+            No hay categorías. Agrega una nueva.
+          </p>
+        )}
       </div>
     </div>
   );

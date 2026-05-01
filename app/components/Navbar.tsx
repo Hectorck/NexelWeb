@@ -3,10 +3,10 @@
 import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Icons, getCategoryIcon } from "./Icons";
-import { collection, onSnapshot, query, orderBy } from "firebase/firestore";
+import { collection, onSnapshot, query, orderBy, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { obtenerProductos } from "../../lib/productos-db";
-import { cerrarSesion, obtenerRedesSociales, obtenerLogo, obtenerUbicacion, RedesSociales, Ubicacion } from "../../lib/firebaseService";
+import { cerrarSesion, obtenerRedesSociales, obtenerLogo, obtenerUbicacion, obtenerTiendasUsuario, RedesSociales, Ubicacion } from "../../lib/firebaseService";
 import { useAuth } from "@/lib/AuthContext";
 import { useTheme } from "@/lib/ThemeContext";
 import { useUser } from "../context/UserContext";
@@ -185,11 +185,26 @@ export const Navbar = () => {
 
   // Categorías integradas
   const [categorias, setCategorias] = useState<any[]>([]);
+  const [tiendaActual, setTiendaActual] = useState<any>(null);
 
   useEffect(() => { setMounted(true); }, []);
 
-  // Escuchar categorías desde Firestore
+  // Cargar tiendas
   useEffect(() => {
+    if (usuario?.uid) {
+      obtenerTiendasUsuario(usuario.uid).then((tiendasData) => {
+        setTiendas(tiendasData);
+        if (tiendasData.length > 0) {
+          setTiendaActual(tiendasData[0]);
+        }
+      });
+    }
+  }, [usuario?.uid]);
+
+  // Escuchar categorías desde Firestore con aislamiento
+  useEffect(() => {
+    if (!tiendaActual || !usuario) return;
+    
     const sortByOrder = (items: any[]): any[] => {
       return items
         .sort((a, b) => (a.orden ?? 999) - (b.orden ?? 999))
@@ -200,14 +215,17 @@ export const Navbar = () => {
     };
 
     const unsub = onSnapshot(
-      collection(db, "categorias"),
+      query(collection(db, "categorias"),
+        where("usuarioId", "==", usuario.uid),
+        where("tiendaId", "==", tiendaActual.id)
+      ),
       (snap) => {
         const cats = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
         setCategorias(sortByOrder(cats));
       }
     );
     return () => unsub();
-  }, []);
+  }, [tiendaActual, usuario]);
 
   // Cargar redes sociales del usuario
   useEffect(() => {

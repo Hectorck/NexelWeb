@@ -45,11 +45,32 @@ export default function AdminInventario() {
     return { total, conStock, pocoStock, sinStock };
   }, [productos]);
 
+  // Cargar tiendas del usuario
+  useEffect(() => {
+    if (!usuario?.uid) return;
+    const cargarTiendas = async () => {
+      setTiendaLoading(true);
+      try {
+        const tiendasData = await obtenerTiendasUsuario(usuario.uid);
+        setTiendas(tiendasData);
+      } catch (err) {
+        console.error("Error cargando tiendas:", err);
+      } finally {
+        setTiendaLoading(false);
+      }
+    };
+    cargarTiendas();
+  }, [usuario?.uid]);
+
   useEffect(() => {
     if (!usuario?.uid) return;
     crearBodegaDefaultUsuario(usuario.uid).catch(console.error);
     cargarProductos();
   }, [usuario?.uid]);
+
+  // Obtener la tienda actual (la primera por ahora)
+  const tiendaActual = tiendas.length > 0 ? tiendas[0] : null;
+  const tiendaId = tiendaActual?.id;
 
   if (!usuario || !currentColors) {
     return (
@@ -272,17 +293,48 @@ export default function AdminInventario() {
             />
 
             {/* TABLA */}
-            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow border border-slate-200 dark:border-slate-700 overflow-hidden">
+            <div 
+              className="rounded-2xl shadow border overflow-hidden"
+              style={{
+                backgroundColor: currentColors?.bgPrimary || '#ffffff',
+                borderColor: currentColors?.borderColor || '#e2e8f0'
+              }}
+            >
               {/* overflow-x-auto FUERA del max-h para que ambos scrolls funcionen independiente */}
               <div className="overflow-x-auto">
                 <div className="max-h-[55vh] overflow-y-auto">
                   <table className="text-sm min-w-[520px] w-full">
-                    <thead className="bg-slate-50 dark:bg-slate-800 sticky top-0 z-10">
+                    <thead 
+                      className="sticky top-0 z-10"
+                      style={{
+                        backgroundColor: currentColors?.bgSecondary || '#f8fafc'
+                      }}
+                    >
                       <tr>
-                        <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300 text-xs sm:text-sm w-[40%]">Nombre</th>
-                        <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300 text-xs sm:text-sm">Stock</th>
-                        <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300 text-xs sm:text-sm">Precio</th>
-                        <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300 text-xs sm:text-sm">Acciones</th>
+                        <th 
+                          className="px-4 py-3 text-left font-semibold text-xs sm:text-sm w-[40%]"
+                          style={{ color: currentColors?.textSecondary || '#64748b' }}
+                        >
+                          Nombre
+                        </th>
+                        <th 
+                          className="px-4 py-3 text-left font-semibold text-xs sm:text-sm"
+                          style={{ color: currentColors?.textSecondary || '#64748b' }}
+                        >
+                          Stock
+                        </th>
+                        <th 
+                          className="px-4 py-3 text-left font-semibold text-xs sm:text-sm"
+                          style={{ color: currentColors?.textSecondary || '#64748b' }}
+                        >
+                          Precio
+                        </th>
+                        <th 
+                          className="px-4 py-3 text-left font-semibold text-xs sm:text-sm"
+                          style={{ color: currentColors?.textSecondary || '#64748b' }}
+                        >
+                          Acciones
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
@@ -355,7 +407,7 @@ export default function AdminInventario() {
         )}
 
         {vista === "marcas" && <MarcasAdminPanel usuarioId={usuario!.uid} />}
-        {vista === "categorias" && <CategoriasAdminPanel usuarioId={usuario!.uid} />}
+        {vista === "categorias" && <CategoriasAdminPanel usuarioId={usuario!.uid} tiendaId={tiendaId} />}
         {vista === "bodegas" && <BodegasAdminPanel />}
       </div>
     </div>

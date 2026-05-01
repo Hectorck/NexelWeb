@@ -11,7 +11,7 @@ import {
   obtenerProductosUsuarioPorSubcategoria,
   obtenerProductosUsuarioPorSubsubcategoria
 } from "@/lib/firebaseService";
-import { obtenerCategorias } from "@/lib/categorias-db";
+import { obtenerCategoriasUsuario } from "@/lib/categorias-db";
 import { useAuth } from "@/lib/AuthContext";
 import { useTheme } from "@/lib/ThemeContext";
 import { useUser } from "../../context/UserContext";
@@ -28,6 +28,7 @@ export default function ProductsByCategoryPage() {
   const subsubcategoria = (searchParams?.get("subsubcat") || searchParams?.get("subsubcategory") || searchParams?.get("subsub") || "").trim();
 
   const [tiendas, setTiendas] = useState<any[]>([]);
+  const [tiendaActual, setTiendaActual] = useState<any>(null);
   const [productos, setProductos] = useState<Producto[]>([]);
   const [loadingData, setLoadingData] = useState(false);
   const [search, setSearch] = useState("");
@@ -210,7 +211,9 @@ export default function ProductsByCategoryPage() {
 
   useEffect(() => {
     async function fetchCategorias() {
-      const cats = await obtenerCategorias();
+      if (!tiendaActual || !usuario) return;
+      
+      const cats = await obtenerCategoriasUsuario(usuario.uid, tiendaActual.id);
       const catObj: any = {};
       const subcatObj: any = {};
       const subsubcatObj: any = {};
@@ -232,7 +235,7 @@ export default function ProductsByCategoryPage() {
       setSubsubcatMap(subsubcatObj);
     }
     fetchCategorias();
-  }, []);
+  }, [tiendaActual, usuario]);
 
   function getCategoryName(id: string) {
     return catMap[id] || id;

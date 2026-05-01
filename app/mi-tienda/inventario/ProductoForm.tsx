@@ -7,6 +7,7 @@ import { useEffect } from "react";
 import { obtenerMarcasUsuario } from "@/lib/marcas-db";
 import { obtenerBodegasUsuario } from "@/lib/bodegas-db";
 import { useAuth } from "@/lib/AuthContext";
+import { useTheme } from "@/lib/ThemeContext";
 
 // Componente de formulario para crear/modificar productos
 type Producto = {
@@ -34,6 +35,7 @@ export default function ProductoForm({ initialData = null, onSave, onCancel }: P
     // Estado de carga para el submit
     const [loading, setLoading] = useState(false);
     const { usuario } = useAuth();
+    const { currentColors } = useTheme();
   // Si initialData existe, es edición, si no, es creación
   const isEdit = !!initialData;
   const [nombre, setNombre] = useState<string>(initialData?.nombre || "");
@@ -329,33 +331,113 @@ export default function ProductoForm({ initialData = null, onSave, onCancel }: P
     <form className="grid grid-cols-1 md:grid-cols-2 gap-8" onSubmit={handleSubmit}>
       {/* errorMsg UI removido */}
       {/* Columna izquierda: datos principales */}
-      <div className="flex flex-col gap-5 bg-purple-50/60 dark:bg-purple-950/30 rounded-2xl p-5 border border-purple-200 dark:border-purple-900">
-        <label className="font-bold text-purple-800 dark:text-purple-200 flex flex-col gap-1">
-          <span className="mb-1 flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-purple-700 inline-block"></span> Nombre</span>
-          <input className="input bg-white/80 border-2 border-purple-300 focus:border-purple-700 rounded-lg px-3 py-2 text-lg font-semibold text-slate-800 dark:text-slate-900" value={nombre} onChange={e => setNombre(e.target.value)} required />
+      <div 
+        className="flex flex-col gap-5 rounded-2xl p-5 border"
+        style={{
+          backgroundColor: currentColors?.bgSecondary || '#faf5ff',
+          borderColor: currentColors?.borderColor || '#d8b4fe'
+        }}
+      >
+        <label className="font-bold flex flex-col gap-1" style={{ color: currentColors?.textPrimary || '#6b21a8' }}>
+          <span className="mb-1 flex items-center gap-2">
+            <span 
+              className="w-2 h-2 rounded-full inline-block"
+              style={{ backgroundColor: currentColors?.accentColor || '#7c3aed' }}
+            ></span> 
+            Nombre
+          </span>
+          <input 
+            className="rounded-lg px-3 py-2 text-lg font-semibold"
+            style={{
+              backgroundColor: currentColors?.bgPrimary || '#ffffff',
+              borderColor: currentColors?.borderColor || '#d8b4fe',
+              color: currentColors?.textPrimary || '#1e293b'
+            }}
+            value={nombre} 
+            onChange={e => setNombre(e.target.value)} 
+            required 
+          />
         </label>
-        <label className="font-bold text-purple-800 dark:text-purple-200 flex flex-col gap-1">
-          <span className="mb-1 flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-slate-500 inline-block"></span> SKU (código interno)</span>
+        <label className="font-bold flex flex-col gap-1" style={{ color: currentColors?.textPrimary || '#6b21a8' }}>
+          <span className="mb-1 flex items-center gap-2">
+            <span 
+              className="w-2 h-2 rounded-full inline-block"
+              style={{ backgroundColor: currentColors?.textSecondary || '#64748b' }}
+            ></span> 
+            SKU (código interno)
+          </span>
           <input
-            className="input bg-white/80 border-2 border-slate-300 focus:border-slate-600 rounded-lg px-3 py-2 text-base font-medium text-slate-800 dark:text-slate-900"
+            className="rounded-lg px-3 py-2 text-base font-medium"
+            style={{
+              backgroundColor: currentColors?.bgPrimary || '#ffffff',
+              borderColor: currentColors?.borderColor || '#cbd5e1',
+              color: currentColors?.textPrimary || '#1e293b'
+            }}
             type="text"
             value={sku}
             readOnly
             placeholder={isEdit ? "SKU asignado" : "Se generará automáticamente"}
           />
         </label>
-        <label className="font-bold text-purple-800 dark:text-purple-200 flex flex-col gap-1">
-          <span className="mb-1 flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-green-600 inline-block"></span> Stock</span>
-          <input className="input bg-white/80 border-2 border-green-300 focus:border-green-600 rounded-lg px-3 py-2 text-lg font-semibold text-slate-800 dark:text-slate-900" type="number" min="0" value={stock} onChange={e => setStock(Number(e.target.value))} required />
+        <label className="font-bold flex flex-col gap-1" style={{ color: currentColors?.textPrimary || '#6b21a8' }}>
+          <span className="mb-1 flex items-center gap-2">
+            <span 
+              className="w-2 h-2 rounded-full inline-block"
+              style={{ backgroundColor: '#16a34a' }}
+            ></span> 
+            Stock
+          </span>
+          <input 
+            className="rounded-lg px-3 py-2 text-lg font-semibold"
+            style={{
+              backgroundColor: currentColors?.bgPrimary || '#ffffff',
+              borderColor: currentColors?.borderColor || '#86efac',
+              color: currentColors?.textPrimary || '#1e293b'
+            }}
+            type="number" 
+            min="0" 
+            value={stock} 
+            onChange={e => setStock(Number(e.target.value))} 
+            required 
+          />
         </label>
-        <label className="font-bold text-purple-800 dark:text-purple-200 flex flex-col gap-1">
-          <span className="mb-1 flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-yellow-400 inline-block"></span> Precio</span>
-          <input className="input bg-white/80 border-2 border-yellow-300 focus:border-yellow-500 rounded-lg px-3 py-2 text-lg font-semibold text-slate-800 dark:text-slate-900" type="number" min="0" value={precio} onChange={e => setPrecio(e.target.value)} required />
+        <label className="font-bold flex flex-col gap-1" style={{ color: currentColors?.textPrimary || '#6b21a8' }}>
+          <span className="mb-1 flex items-center gap-2">
+            <span 
+              className="w-2 h-2 rounded-full inline-block"
+              style={{ backgroundColor: '#eab308' }}
+            ></span> 
+            Precio
+          </span>
+          <input 
+            className="rounded-lg px-3 py-2 text-lg font-semibold"
+            style={{
+              backgroundColor: currentColors?.bgPrimary || '#ffffff',
+              borderColor: currentColors?.borderColor || '#fde047',
+              color: currentColors?.textPrimary || '#1e293b'
+            }}
+            type="number" 
+            min="0" 
+            value={precio} 
+            onChange={e => setPrecio(e.target.value)} 
+            required 
+          />
         </label>
-        <label className="font-bold text-purple-800 dark:text-purple-200 flex flex-col gap-1">
-          <span className="mb-1 flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-red-500 inline-block"></span> Descuento (%)</span>
+        <label className="font-bold flex flex-col gap-1" style={{ color: currentColors?.textPrimary || '#6b21a8' }}>
+          <span className="mb-1 flex items-center gap-2">
+            <span 
+              className="w-2 h-2 rounded-full inline-block"
+              style={{ backgroundColor: '#ef4444' }}
+            ></span> 
+            Descuento (%)
+          </span>
           <input
-            className="input bg-white/80 border-2 border-red-300 focus:border-red-500 rounded-lg px-3 py-2 text-lg font-semibold text-slate-800 dark:text-slate-900"
+            className="rounded-lg px-3 py-2 text-lg font-semibold"
+            style={{
+              backgroundColor: currentColors?.bgPrimary || '#ffffff',
+              borderColor: currentColors?.borderColor || '#fca5a5',
+              color: currentColors?.textPrimary || '#1e293b'
+            }}
             type="number"
             min="0"
             max="100"
@@ -373,19 +455,55 @@ export default function ProductoForm({ initialData = null, onSave, onCancel }: P
             }}
             placeholder="Opcional"
           />
-          <span className="text-xs font-normal text-slate-500 dark:text-slate-400 mt-1">Si se indica, se aplicará sobre el precio base.</span>
+          <span 
+            className="text-xs font-normal mt-1"
+            style={{ color: currentColors?.textSecondary || '#6b7280' }}
+          >
+            Si se indica, se aplicará sobre el precio base.
+          </span>
         </label>
-        <label className="font-bold text-purple-800 dark:text-purple-200 flex flex-col gap-1">
-          <span className="mb-1 flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-green-700 inline-block"></span> Marca</span>
-          <select className="input bg-white/80 border-2 border-green-300 focus:border-green-700 rounded-lg px-3 py-2 text-lg font-semibold text-slate-800 dark:text-slate-900" value={marca} onChange={e => setMarca(e.target.value)} required>
+        <label className="font-bold flex flex-col gap-1" style={{ color: currentColors?.textPrimary || '#6b21a8' }}>
+          <span className="mb-1 flex items-center gap-2">
+            <span 
+              className="w-2 h-2 rounded-full inline-block"
+              style={{ backgroundColor: '#16a34a' }}
+            ></span> 
+            Marca
+          </span>
+          <select 
+            className="rounded-lg px-3 py-2 text-lg font-semibold"
+            style={{
+              backgroundColor: currentColors?.bgPrimary || '#ffffff',
+              borderColor: currentColors?.borderColor || '#86efac',
+              color: currentColors?.textPrimary || '#1e293b'
+            }}
+            value={marca} 
+            onChange={e => setMarca(e.target.value)} 
+            required
+          >
             <option value="">Selecciona</option>
-            {(() => { console.log("🏷️ Renderizando marcas:", marcas); return null; })()}
             {marcas.map(m => <option key={m.id} value={m.nombre}>{m.nombre}</option>)}
           </select>
         </label>
-        <label className="font-bold text-purple-800 dark:text-purple-200 flex flex-col gap-1">
-          <span className="mb-1 flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-orange-600 inline-block"></span> Bodega (Entrega)</span>
-          <select className="input bg-white/80 border-2 border-orange-300 focus:border-orange-700 rounded-lg px-3 py-2 text-lg font-semibold text-slate-800 dark:text-slate-900" value={bodegaId} onChange={e => setBodegaId(e.target.value)} required>
+        <label className="font-bold flex flex-col gap-1" style={{ color: currentColors?.textPrimary || '#6b21a8' }}>
+          <span className="mb-1 flex items-center gap-2">
+            <span 
+              className="w-2 h-2 rounded-full inline-block"
+              style={{ backgroundColor: '#ea580c' }}
+            ></span> 
+            Bodega (Entrega)
+          </span>
+          <select 
+            className="rounded-lg px-3 py-2 text-lg font-semibold"
+            style={{
+              backgroundColor: currentColors?.bgPrimary || '#ffffff',
+              borderColor: currentColors?.borderColor || '#fb923c',
+              color: currentColors?.textPrimary || '#1e293b'
+            }}
+            value={bodegaId} 
+            onChange={e => setBodegaId(e.target.value)} 
+            required
+          >
             <option value="">Selecciona una bodega</option>
             {bodegas.map(b => (
               <option key={b.id} value={b.id}>
