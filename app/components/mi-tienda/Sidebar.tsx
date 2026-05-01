@@ -128,19 +128,11 @@ export default function Sidebar() {
           {/* Header */}
           <div 
             className="p-6"
-            style={{ borderBottom: currentColors?.bgPrimary === '#ffffff' ? `1px solid ${currentColors?.borderColor || '#e5e7eb'}` : '1px solid rgba(255, 255, 255, 0.08)' }}
+            style={{justifyItems:"center", borderBottom: currentColors?.bgPrimary === '#ffffff' ? `1px solid ${currentColors?.borderColor || '#e5e7eb'}` : '1px solid rgba(255, 255, 255, 0.08)' }}
           >
             <div className="flex items-center space-x-4">
-              <div 
-                className="w-14 h-14 rounded-xl flex items-center justify-center shadow-lg"
-                style={{
-                  background: `linear-gradient(135deg, ${currentColors?.accentColor || '#06b6d4'}, ${currentColors?.buttonBg || '#3b82f6'})`,
-                  color: currentColors?.buttonText || '#ffffff'
-                }}
-              >
-                <span className="font-bold text-lg">Logo</span>
-              </div>
-              <div>
+
+              <div className="text-center">
                 <h1 
                   className="text-xl font-bold"
                   style={{ color: currentColors?.textPrimary || '#1f2937' }}
@@ -266,8 +258,7 @@ export default function Sidebar() {
               className="flex items-center justify-between mt-4 text-sm"
               style={{ color: currentColors?.textSecondary || '#6b7280' }}
             >
-              <span>Tu tienda</span>
-              <span>© 2026</span>
+
             </div>
           </div>
         </div>

@@ -15,10 +15,12 @@ import { useTiendaRoutes } from "@/lib/useTiendaRoutes";
 // ─────────────────────────────────────────────
 // Acordeón de categorías para el drawer móvil
 // ─────────────────────────────────────────────
-function MobileCategoriesAccordion({ basePath }: { basePath: string }) {
+function MobileCategoriesAccordion({ basePath, usuario, tiendaActual, currentColors }: { basePath: string; usuario: any; tiendaActual: any; currentColors: any }) {
   const [categorias, setCategorias] = React.useState<any[]>([]);
   const [openCat, setOpenCat] = React.useState<string | null>(null);
   const [openSub, setOpenSub] = React.useState<string | null>(null);
+  const [hoveredCat, setHoveredCat] = React.useState<string | null>(null);
+  const [hoveredSub, setHoveredSub] = React.useState<string | null>(null);
 
   // Ordenar categorías recursivamente por el campo 'orden'
   const sortByOrder = (items: any[]): any[] => {
@@ -31,35 +33,42 @@ function MobileCategoriesAccordion({ basePath }: { basePath: string }) {
   };
 
   React.useEffect(() => {
+    if (!usuario || !tiendaActual) return;
+    
     const unsub = onSnapshot(
-      collection(db, "categorias"),
+      query(collection(db, "categorias"),
+        where("usuarioId", "==", usuario.uid),
+        where("tiendaId", "==", tiendaActual.id)
+      ),
       (snap) => {
         const cats = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
         setCategorias(sortByOrder(cats));
       }
     );
     return () => unsub();
-  }, []);
+  }, [usuario, tiendaActual]);
 
   return (
     <div className="flex flex-col gap-1 my-3">
       <p className="text-xs font-semibold uppercase tracking-wider px-2 mb-1"
-        style={{ color: "var(--textMuted)" }}>
+        style={{ color: currentColors?.textSecondary || '#6b7280' }}>
         Categorías
       </p>
       {categorias.map((cat) => (
         <div key={cat.id}>
           <button
             className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-colors"
-            style={{ color: "var(--text)" }}
+            style={{ color: currentColors?.textPrimary || '#1f2937' }}
             onClick={() =>
               setOpenCat(openCat === cat.id ? null : cat.id)
             }
+            onMouseEnter={() => setHoveredCat(cat.id)}
+            onMouseLeave={() => setHoveredCat(null)}
           >
             <span className="flex items-center gap-2">
               {cat.icono && (
                 <span className="text-base"
-                  style={{ color: "var(--accent)" }}>
+                  style={{ color: currentColors?.accentColor || '#06b6d4' }}>
                   {getCategoryIcon(cat.icono)}
                 </span>
               )}
@@ -69,7 +78,7 @@ function MobileCategoriesAccordion({ basePath }: { basePath: string }) {
               <span
                 className="transition-transform duration-200"
                 style={{
-                  color: "var(--textMuted)",
+                  color: currentColors?.textSecondary || '#6b7280',
                   transform: openCat === cat.id ? "rotate(180deg)" : "rotate(0deg)",
                 }}
               >
@@ -78,25 +87,27 @@ function MobileCategoriesAccordion({ basePath }: { basePath: string }) {
             )}
           </button>
 
-          {cat.subcategorias?.length > 0 && openCat === cat.id && (
+          {cat.subcategorias?.length > 0 && (openCat === cat.id || hoveredCat === cat.id) && (
             <div className="ml-4 mb-1 rounded-xl overflow-hidden border"
-              style={{ borderColor: "var(--border)" }}>
+              style={{ borderColor: currentColors?.borderColor || '#e5e7eb' }}>
               {cat.subcategorias.map((sub: any) => (
                 <div key={sub.id}>
                   {sub.subcategorias?.length > 0 ? (
                     <>
                       <button
                         className="w-full flex items-center justify-between px-3 py-2 text-sm transition-shadow hover:shadow-sm rounded-md"
-                        style={{ color: "var(--text)" }}
+                        style={{ color: currentColors?.textPrimary || '#1f2937' }}
                         onClick={() =>
                           setOpenSub(openSub === sub.id ? null : sub.id)
                         }
+                        onMouseEnter={() => setHoveredSub(sub.id)}
+                        onMouseLeave={() => setHoveredSub(null)}
                       >
                         <span>{sub.nombre}</span>
                         <span
                           className="material-icons-round text-sm transition-transform duration-200"
                           style={{
-                            color: "var(--textMuted)",
+                            color: currentColors?.textSecondary || '#6b7280',
                             transform:
                               openSub === sub.id
                                 ? "rotate(180deg)"
@@ -106,15 +117,15 @@ function MobileCategoriesAccordion({ basePath }: { basePath: string }) {
                           arrow_drop_down
                         </span>
                       </button>
-                      {openSub === sub.id && (
+                      {(openSub === sub.id || hoveredSub === sub.id) && (
                         <div className="ml-3 border-l"
-                          style={{ borderColor: "var(--border)" }}>
+                          style={{ borderColor: currentColors?.borderColor || '#e5e7eb' }}>
                           {sub.subcategorias.map((subsub: any) => (
                             <a
                               key={subsub.id}
                               href={`${basePath}?cat=${cat.id}&sub=${sub.id}&subsub=${subsub.id}`}
                               className="block px-4 py-2 text-xs transition-colors"
-                              style={{ color: "var(--textMuted)" }}
+                              style={{ color: currentColors?.textSecondary || '#6b7280' }}
                             >
                               {subsub.nombre}
                             </a>
@@ -126,7 +137,7 @@ function MobileCategoriesAccordion({ basePath }: { basePath: string }) {
                     <a
                       href={`${basePath}?cat=${cat.id}&sub=${sub.id}`}
                       className="block px-3 py-2 text-sm transition-shadow hover:shadow-sm rounded-md"
-                      style={{ color: "var(--text)" }}
+                      style={{ color: currentColors?.textPrimary || '#1f2937' }}
                     >
                       {sub.nombre}
                     </a>
@@ -818,7 +829,7 @@ export const Navbar = () => {
               ))}
 
               {/* Categorías en acordeón */}
-              <MobileCategoriesAccordion basePath={basePath} />
+              <MobileCategoriesAccordion basePath={basePath} usuario={usuario} tiendaActual={tiendaActual} currentColors={currentColors} />
 
               {/* Divisor */}
               <div className="border-t my-2" style={{ borderColor: currentColors?.borderColor || '#e5e7eb' }} />

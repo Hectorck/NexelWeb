@@ -359,7 +359,7 @@ export default function CategoriasAdminPanel({ onCategoriasChange, usuarioId, ti
                             subcategorias: nivel === 1 ? [] : undefined 
                           });
                           setCategorias(newCat);
-                          await guardarCategoriaUsuario(newCat[path[0]], usuarioId);
+                          await actualizarCategoriaUsuario(newCat[path[0]].id, newCat[path[0]], usuarioId, tiendaId);
                         }
                       }}
                     >
