@@ -1,36 +1,98 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🚀 Nexel - Agencia de E-commerce SaaS
 
-## Getting Started
+Plataforma moderna para crear y gestionar tiendas virtuales sin código. Sistema de usuarios con niveles de acceso: Pre-clientes (prueba gratis), Clientes (planes pagados) y Admin.
 
-First, run the development server:
+## 🎯 Visión
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+**Nexel** transforma tu idea de negocio en realidad. En lugar de solo vender tiendas personalizadas, ahora ofreces:
+
+1. **Prueba Gratuita (Plan Demo)** - Pre-clientes prueban con límites
+2. **Conversión a Cliente** - Mayor confianza = Mayor probabilidad de compra
+3. **Planes Flexibles** - Escalabilidad según necesidad
+
+## 🏗️ Arquitectura
+
+```
+Frontend (Next.js 16) ← → Firebase (Backend)
+├─ Dashboards        
+├─ Editor Tienda     
+└─ Página Pública    
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🚀 Inicio Rápido
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+# Clonar proyecto
+git clone <repo>
+cd official-nexel
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# Instalar dependencias
+npm install
 
-## Learn More
+# Configurar Firebase (ver SETUP_GUIDE.md)
+cp .env.example .env.local
+# Edita .env.local con tus credenciales
 
-To learn more about Next.js, take a look at the following resources:
+# Iniciar servidor
+npm run dev
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# Abre http://localhost:3000
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 📊 Estructura
 
-## Deploy on Vercel
+```
+app/
+├── page.tsx                 # Página inicio
+├── login/page.tsx          # Login
+├── registro/page.tsx       # Registro
+├── admin/dashboard/        # Panel admin
+├── pre-cliente/dashboard/  # Dashboard pre-cliente
+└── cliente/dashboard/      # Dashboard cliente
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+lib/
+├── firebase.ts             # Config Firebase
+├── firebaseService.ts      # Servicios
+├── types.ts               # Tipos
+└── AuthContext.tsx        # Context
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🔐 Sistema de Usuarios
+
+- **Admin**: Gestiona plataforma, invita usuarios
+- **Pre-cliente**: Prueba gratis (10 productos, 3 categorías)
+- **Cliente**: Acceso según plan contratado
+
+## 📖 Documentación
+
+- [SETUP_GUIDE.md](./SETUP_GUIDE.md) - Guía completa
+- [FIREBASE_SETUP.md](./FIREBASE_SETUP.md) - Firebase
+- [CHECKLIST.md](./CHECKLIST.md) - Checklist
+- [IMPLEMENTATION_SUMMARY.md](./IMPLEMENTATION_SUMMARY.md) - Resumen
+
+## 🛠️ Stack
+
+- Next.js 16
+- React 19  
+- TypeScript
+- Firebase / Firestore
+- Tailwind CSS
+
+## 🚦 Próximos Pasos
+
+1. Configura Firebase (ver SETUP_GUIDE.md)
+2. Crea usuario admin
+3. Prueba el sistema
+4. Implementa editor de tienda
+
+## 📞 Soporte
+
+Consulta los archivos de documentación para:
+- Instrucciones de configuración
+- Troubleshooting
+- Ejemplos de uso
+- Mejores prácticas
+
+---
+
+**¡Comienza ahora!** Lee [SETUP_GUIDE.md](./SETUP_GUIDE.md)
