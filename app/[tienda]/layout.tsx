@@ -72,7 +72,7 @@ function TiendaLayoutContent({ children, urlSlug }: { children: React.ReactNode;
         <div className="flex">
           <Sidebar />
           
-          <main className="flex-1 md:ml-0 mb-16 md:mb-0 min-w-0">
+          <main className="flex-1 md:ml-0 mb-20 md:mb-0 pb-6 md:pb-0 min-w-0">
             {children}
           </main>
         </div>

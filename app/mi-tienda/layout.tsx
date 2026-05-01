@@ -18,7 +18,7 @@ export default function PreClienteLayout({ children }: { children: React.ReactNo
             <div className="flex">
               <Sidebar />
               
-              <main className="flex-1 md:ml-0 mb-16 md:mb-0 min-w-0">
+              <main className="flex-1>
                 {children}
               </main>
             </div>
