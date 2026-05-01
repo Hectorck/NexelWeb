@@ -1,0 +1,67 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // ==================== LOGOS ====================
+    // Solo el propietario puede subir/descargar sus logos
+    match /logos/{userId}/{allPaths=**} {
+      allow read: if request.auth != null;
+      allow write: if request.auth.uid == userId;
+      allow delete: if request.auth.uid == userId;
+    }
+
+    // ==================== IMÁGENES DE PRODUCTOS ====================
+    // Solo el propietario puede subir/descargar imágenes de sus productos
+    match /productos/{tiendaId}/{allPaths=**} {
+      allow read: if request.auth != null;
+      allow write: if request.auth.uid == tiendaId;
+      allow delete: if request.auth.uid == tiendaId;
+    }
+
+    // ==================== IMÁGENES DE TIENDA ====================
+    // Solo el propietario puede subir/descargar imágenes de su tienda
+    match /tiendas/{tiendaId}/{allPaths=**} {
+      allow read: if request.auth != null;
+      allow write: if request.auth.uid == tiendaId;
+      allow delete: if request.auth.uid == tiendaId;
+    }
+
+    // ==================== AVATARES ====================
+    // Solo el propietario
+    match /avatares/{userId}/{allPaths=**} {
+      allow read: if request.auth != null;
+      allow write: if request.auth.uid == userId;
+      allow delete: if request.auth.uid == userId;
+    }
+
+    // ==================== PROFILE PICTURES ====================
+    // Solo el propietario puede subir su foto de perfil
+    match /profile_pictures/{userId}/{allPaths=**} {
+      allow read: if request.auth != null;
+      allow write: if request.auth.uid == userId;
+      allow delete: if request.auth.uid == userId;
+    }
+
+    // ==================== BLOGS ====================
+    // Solo el propietario puede subir imágenes de sus blogs
+    match /blogs/{userId}/{allPaths=**} {
+      allow read: if request.auth != null;
+      allow write: if request.auth.uid == userId;
+      allow delete: if request.auth.uid == userId;
+    }
+
+    // ==================== DOCUMENTOS ====================
+    // Solo el propietario
+    match /documentos/{userId}/{allPaths=**} {
+      allow read: if request.auth.uid == userId;
+      allow write: if request.auth.uid == userId;
+      allow delete: if request.auth.uid == userId;
+    }
+
+    // ==================== DENEGAR POR DEFECTO ====================
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
