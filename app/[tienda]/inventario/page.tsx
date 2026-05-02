@@ -264,7 +264,7 @@ export default function AdminInventario() {
                   if (editData) {
                     await actualizarProducto(editData.id, data);
                   } else {
-                    await crearProducto({ ...data, usuarioId: usuario.uid });
+                    await crearProducto({ ...data, usuarioId: usuario.uid, tiendaId });
                   }
                   setShowForm(false);
                   setEditData(null);

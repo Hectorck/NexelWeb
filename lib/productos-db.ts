@@ -161,7 +161,16 @@ export async function crearProducto(producto: Producto): Promise<Producto> {
 // Obtener todos los productos
 // Si opts.incluirSinStock es true, no filtra por stock (solo para admin/inventario)
 export async function obtenerProductos(usuarioId: string, tiendaId?: string, opts = {}) {
-  const snapshot = await getDocs(collection(db, COLLECTION));
+  console.log('DEBUG PRODUCTOS - obtenerProductos:', { usuarioId, tiendaId });
+  let q = query(collection(db, COLLECTION), where("usuarioId", "==", usuarioId));
+  
+  if (tiendaId) {
+    console.log('DEBUG PRODUCTOS - Filtrando por tiendaId:', tiendaId);
+    q = query(collection(db, COLLECTION), where("usuarioId", "==", usuarioId), where("tiendaId", "==", tiendaId));
+  }
+  
+  const snapshot = await getDocs(q);
+  console.log('DEBUG PRODUCTOS - Documentos encontrados:', snapshot.docs.length);
   let productos = snapshot.docs.map(doc => {
     const data = doc.data();
     const producto = { id: doc.id, ...data };

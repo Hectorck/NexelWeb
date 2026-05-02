@@ -1,4 +1,7 @@
 "use client";
+
+console.log('DEBUG - ARCHIVO products-by-category/page.tsx CARGADO');
+
 import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
 import ProductoCard from "../../components/ProductoCard";
@@ -18,6 +21,7 @@ import { useUser } from "../../context/UserContext";
 import { useTiendaContext } from "@/lib/TiendaContext";
 
 export default function ProductsByCategoryPage() {
+  console.log('DEBUG - ProductsByCategoryPage iniciado');
   const searchParams = useSearchParams();
   const router = useRouter();
   const { usuario, loading: authLoading } = useAuth();
@@ -41,18 +45,22 @@ export default function ProductsByCategoryPage() {
 
   // Validación de autenticación
   useEffect(() => {
+    console.log('DEBUG - Validación auth:', { authLoading, usuario: !!usuario, role: usuario?.role });
     if (!authLoading && (!usuario || usuario.role !== "pre-cliente")) {
+      console.log('DEBUG - Redirigiendo a / - usuario no válido');
       router.push("/");
     }
   }, [authLoading, usuario, router]);
 
   // Cargar datos de la tienda y productos
   useEffect(() => {
+    console.log('DEBUG - useEffect ejecutado', { usuario: !!usuario, categoria, subcategoria, subsubcategoria });
     if (!usuario) return;
     cargarDatos();
   }, [usuario, categoria, subcategoria, subsubcategoria]);
 
   const cargarDatos = async () => {
+    console.log('DEBUG - cargarDatos iniciado para productos por categoría');
     setLoadingData(true);
     try {
       const [tiendasData] = await Promise.all([
@@ -62,15 +70,29 @@ export default function ProductsByCategoryPage() {
       
       // Cargar productos según la categoría solicitada
       let productosData = [];
+      const tiendaId = tiendasData.length > 0 ? tiendasData[0].id : null;
+      
+      console.log('DEBUG - Cargando productos por categoría:', {
+        categoria,
+        subcategoria,
+        subsubcategoria,
+        tiendaId,
+        totalTiendas: tiendasData.length,
+        tiendaData: tiendasData[0],
+        tiendaCampos: tiendasData[0] ? Object.keys(tiendasData[0]) : []
+      });
+      
       if (subsubcategoria && subcategoria && categoria) {
-        productosData = await obtenerProductosUsuarioPorSubsubcategoria(usuario.uid, subsubcategoria, subcategoria, categoria);
+        productosData = await obtenerProductosUsuarioPorSubsubcategoria(usuario.uid, subsubcategoria, subcategoria, categoria, tiendaId || undefined);
       } else if (subcategoria && categoria) {
-        productosData = await obtenerProductosUsuarioPorSubcategoria(usuario.uid, subcategoria, categoria);
+        productosData = await obtenerProductosUsuarioPorSubcategoria(usuario.uid, subcategoria, categoria, tiendaId || undefined);
       } else if (categoria) {
-        productosData = await obtenerProductosUsuarioPorCategoria(usuario.uid, categoria);
+        productosData = await obtenerProductosUsuarioPorCategoria(usuario.uid, categoria, tiendaId || undefined);
       } else {
         productosData = await obtenerProductosUsuario(usuario.uid);
       }
+      
+      console.log('DEBUG - Productos obtenidos:', productosData.length);
       
       setProductos(productosData || []);
     } catch (error) {

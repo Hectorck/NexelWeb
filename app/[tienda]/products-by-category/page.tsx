@@ -1,5 +1,8 @@
 "use client";
-import { useSearchParams, useParams } from "next/navigation";
+
+console.log('DEBUG - ARCHIVO products-by-category/page.tsx CARGADO');
+
+import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
 import ProductoCard from "../../components/ProductoCard";
 import { useEffect, useState, useMemo, useCallback } from "react";
@@ -15,22 +18,24 @@ import { obtenerCategoriasUsuario } from "@/lib/categorias-db";
 import { useAuth } from "@/lib/AuthContext";
 import { useTheme } from "@/lib/ThemeContext";
 import { useUser } from "../../context/UserContext";
+import { useTiendaContext } from "@/lib/TiendaContext";
+import { useParams } from "next/navigation";
 
 export default function ProductsByCategoryPage() {
+  console.log('DEBUG - ProductsByCategoryPage iniciado');
   const searchParams = useSearchParams();
   const router = useRouter();
-  const params = useParams();
-  const tiendaId = params.tienda as string;
   const { usuario, loading: authLoading } = useAuth();
   const { currentColors } = useTheme();
   const { addCarrito, removeCarrito, carrito } = useUser();
+  const { tienda } = useTiendaContext();
+  const params = useParams();
 
   const categoria = (searchParams?.get("cat") || searchParams?.get("category") || "").trim();
   const subcategoria = (searchParams?.get("subcat") || searchParams?.get("subcategory") || searchParams?.get("sub") || "").trim();
   const subsubcategoria = (searchParams?.get("subsubcat") || searchParams?.get("subsubcategory") || searchParams?.get("subsub") || "").trim();
 
   const [tiendas, setTiendas] = useState<any[]>([]);
-  const [tiendaActual, setTiendaActual] = useState<any>(null);
   const [productos, setProductos] = useState<Producto[]>([]);
   const [loadingData, setLoadingData] = useState(false);
   const [search, setSearch] = useState("");
@@ -42,37 +47,72 @@ export default function ProductsByCategoryPage() {
 
   // Validación de autenticación
   useEffect(() => {
+    console.log('DEBUG - Validación auth:', { authLoading, usuario: !!usuario, role: usuario?.role });
     if (!authLoading && (!usuario || usuario.role !== "pre-cliente")) {
+      console.log('DEBUG - Redirigiendo a / - usuario no válido');
       router.push("/");
     }
   }, [authLoading, usuario, router]);
 
   // Cargar datos de la tienda y productos
   useEffect(() => {
+    console.log('DEBUG - useEffect ejecutado', { usuario: !!usuario, categoria, subcategoria, subsubcategoria });
     if (!usuario) return;
     cargarDatos();
   }, [usuario, categoria, subcategoria, subsubcategoria]);
 
   const cargarDatos = async () => {
+    console.log('DEBUG - cargarDatos iniciado para productos por categoría');
     setLoadingData(true);
     try {
-      const tiendasData = await obtenerTiendasUsuario(usuario.uid);
+      const [tiendasData] = await Promise.all([
+        obtenerTiendasUsuario(usuario.uid)
+      ]);
       setTiendas(tiendasData);
-      
-      if (tiendasData.length > 0) {
-        setTiendaActual(tiendasData[0]);
-      }
       
       // Cargar productos según la categoría solicitada
       let productosData = [];
+      const tiendaId = params.tienda as string;
+      
+      console.log('DEBUG - Cargando productos por categoría:', {
+        categoria,
+        subcategoria,
+        subsubcategoria,
+        tiendaId,
+        totalTiendas: tiendasData.length,
+        tiendaData: tiendasData[0],
+        tiendaCampos: tiendasData[0] ? Object.keys(tiendasData[0]) : [],
+        categoriaNumerica: Number(categoria),
+        categoriaTipo: typeof categoria,
+        usuarioIdAuth: usuario.uid,  // Firebase Auth
+        usuarioIdProductoEsperado: "faaLeiLBGVaJfpR75aG2xfvEJah1",  // Del producto
+        usuarioIdUserContext: "NECESITO VER ESTE VALOR"  // UserContext
+      });
+      
       if (subsubcategoria && subcategoria && categoria) {
-        productosData = await obtenerProductosUsuarioPorSubsubcategoria(usuario.uid, subsubcategoria, subcategoria, categoria);
+        productosData = await obtenerProductosUsuarioPorSubsubcategoria(usuario.uid, subsubcategoria, subcategoria, categoria, tiendaId || undefined);
       } else if (subcategoria && categoria) {
-        productosData = await obtenerProductosUsuarioPorSubcategoria(usuario.uid, subcategoria, categoria);
+        productosData = await obtenerProductosUsuarioPorSubcategoria(usuario.uid, subcategoria, categoria, tiendaId || undefined);
       } else if (categoria) {
-        productosData = await obtenerProductosUsuarioPorCategoria(usuario.uid, categoria);
+        productosData = await obtenerProductosUsuarioPorCategoria(usuario.uid, categoria, tiendaId || undefined);
       } else {
         productosData = await obtenerProductosUsuario(usuario.uid);
+      }
+      
+      console.log('DEBUG - Productos obtenidos:', productosData.length);
+      
+      // Debugging: mostrar todos los productos sin filtros
+      const todosProductos = await obtenerProductosUsuario(usuario!.uid);
+      console.log('DEBUG - Todos los productos del usuario:', todosProductos.length);
+      if (todosProductos.length > 0) {
+        const primerProducto = todosProductos[0] as any;
+        console.log('DEBUG - Primer producto:', {
+          id: primerProducto.id,
+          nombre: primerProducto.nombre,
+          categoria: primerProducto.categoria,
+          tiendaId: primerProducto.tiendaId,
+          usuarioId: primerProducto.usuarioId
+        });
       }
       
       setProductos(productosData || []);
@@ -86,43 +126,19 @@ export default function ProductsByCategoryPage() {
 
   // Funciones para ProductoCard
   const handleProductoClick = (producto: any) => {
-    // Logging seguro para evitar problemas de cross-origin
-    try {
-      if (typeof console !== 'undefined' && console.log) {
-        console.log("Click en producto:", {
-          id: producto?.id,
-          nombre: producto?.nombre,
-          precio: producto?.precio
-        });
-      }
-    } catch (error) {
-      // Silenciar errores de logging en producción
-    }
+    console.log("Click en producto:", producto);
   };
 
   const handleAddToCart = (producto: any) => {
     // El ProductoCard ya maneja la lógica del carrito
     // Este callback es solo para logging o acciones adicionales
-    try {
-      if (typeof console !== 'undefined' && console.log) {
-        console.log("Callback handleAddToCart ejecutado:", producto?.nombre);
-      }
-    } catch (error) {
-      // Silenciar errores de logging en producción
-    }
+    console.log("Callback handleAddToCart ejecutado:", producto.nombre);
   };
 
   const handleEyeClick = (producto: any) => {
-    try {
-      if (typeof console !== 'undefined' && console.log) {
-        console.log("Vista rápida:", {
-          id: producto?.id,
-          nombre: producto?.nombre
-        });
-      }
-    } catch (error) {
-      // Silenciar errores de logging en producción
-    }
+    console.log("Vista rápida:", producto);
+    // Aquí puedes implementar la lógica para vista rápida
+    // Por ahora solo logueamos
   };
 
   // ── Filtrado y orden ─────────────────────────────
@@ -239,9 +255,9 @@ export default function ProductsByCategoryPage() {
 
   useEffect(() => {
     async function fetchCategorias() {
-      if (!tiendaId) return;
+      if (!tiendas.length || !usuario) return;
       
-      const cats = await obtenerCategoriasUsuario(usuario!.uid, tiendaId);
+      const cats = await obtenerCategoriasUsuario(usuario.uid, tiendas[0].id);
       const catObj: any = {};
       const subcatObj: any = {};
       const subsubcatObj: any = {};
@@ -263,7 +279,7 @@ export default function ProductsByCategoryPage() {
       setSubsubcatMap(subsubcatObj);
     }
     fetchCategorias();
-  }, [tiendaId, usuario]);
+  }, [tiendas, usuario]);
 
   function getCategoryName(id: string) {
     return catMap[id] || id;

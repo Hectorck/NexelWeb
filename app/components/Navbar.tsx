@@ -192,10 +192,10 @@ export const Navbar = () => {
   const routes = useTiendaRoutes(tienda);
 
   // Debug logs
-  console.log("🔍 Navbar - Firebase User:", user);
-  console.log("🔍 Navbar - Usuario Firestore:", usuario);
-  console.log("🔍 Navbar - isAuthenticated:", isAuthenticated);
-  console.log("🔍 Navbar - usuario.role:", usuario?.role);
+  // console.log("🔍 Navbar - Firebase User:", user);
+  // console.log("🔍 Navbar - Usuario Firestore:", usuario);
+  // console.log("🔍 Navbar - isAuthenticated:", isAuthenticated);
+  // console.log("🔍 Navbar - usuario.role:", usuario?.role);
 
   const [redesSociales, setRedesSociales] = useState<RedesSociales>({});
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
@@ -208,9 +208,15 @@ export const Navbar = () => {
   useEffect(() => { setMounted(true); }, []);
 
 // Debug logoUrl changes
-useEffect(() => {
-  console.log("🔍 Navbar - logoUrl actualizado:", logoUrl);
-}, [logoUrl]);
+// useEffect(() => {
+//   console.log("🔍 Navbar - logoUrl actualizado:", logoUrl);
+// }, [logoUrl]);
+
+// Debug categorias state changes
+// useEffect(() => {
+//   console.log("🔍 Navbar - categorías actualizadas:", categorias);
+//   console.log("🔍 Navbar - número de categorías:", categorias.length);
+// }, [categorias]);
 
   // Cargar tiendas
   useEffect(() => {
@@ -226,7 +232,7 @@ useEffect(() => {
 
   // Escuchar categorías desde Firestore con aislamiento
   useEffect(() => {
-    const tiendaIdToUse = tiendaActual?.id || tiendas[0]?.id || effectiveTiendaId;
+    const tiendaIdToUse = effectiveTiendaId || tiendaActual?.id || tiendas[0]?.id;
     
     if (!tiendaIdToUse || !usuario) {
       return;
@@ -241,6 +247,7 @@ useEffect(() => {
         }));
     };
 
+        
     const unsub = onSnapshot(
       query(collection(db, "categorias"),
         where("usuarioId", "==", usuario.uid),
@@ -266,12 +273,9 @@ useEffect(() => {
   // Cargar logo del usuario
   useEffect(() => {
     if (user?.uid) {
-      console.log('Navbar - Cargando logo para usuario:', user.uid);
       obtenerLogo(user.uid).then((logo) => {
-        console.log('Navbar - Logo obtenido:', logo);
         setLogoUrl(logo);
-      }).catch((error) => {
-        console.log('Navbar - Error cargando logo:', error);
+      }).catch(() => {
         setLogoUrl(null);
       });
     }

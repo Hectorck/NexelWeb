@@ -91,7 +91,15 @@ export default function PreClienteDashboard({ params }: { params: Promise<{ tien
   const cargarProductosTienda = async (tiendaData: Tienda) => {
     setProductosLoading(true);
     try {
-      const data = await obtenerProductos(usuario!.uid, tiendaData.id);
+      const tiendaId = tiendaSlug; // Usar el slug de la URL (tecnothings)
+      console.log('DEBUG - Cargando productos para tienda:', {
+        usuarioId: usuario!.uid,
+        tiendaId,
+        tiendaDataNombre: tiendaData.nombre,
+        tiendaDataId: tiendaData.id
+      });
+      const data = await obtenerProductos(usuario!.uid, tiendaId);
+      console.log('DEBUG - Productos obtenidos:', data.length);
       setProductos(data || []);
     } catch (error) {
       console.error("Error cargando productos:", error);
@@ -129,6 +137,14 @@ export default function PreClienteDashboard({ params }: { params: Promise<{ tien
   };
 
   const productosFiltrados = useMemo(() => {
+    console.log('DEBUG - Filtrando productos:', {
+      totalProductos: productos.length,
+      search,
+      precioMin,
+      precioMax,
+      orden
+    });
+    
     return productos
       .filter((p: any) => {
         const texto = search.toLowerCase().trim();
@@ -138,19 +154,43 @@ export default function PreClienteDashboard({ params }: { params: Promise<{ tien
           (p.descripcion?.toLowerCase() || "").includes(texto);
         const base = Number(p.precio || 0);
         const disc = Number(p.descuento || 0);
-        const finalPrice = disc > 0 && disc < 100 ? base * (1 - disc / 100) : base;
+        const finalPrice = disc > 0 && disc < 100 ? Math.round(base * (1 - disc / 100) * 100) / 100 : base;
         const min = precioMin ? parseFloat(precioMin) : null;
         const max = precioMax ? parseFloat(precioMax) : null;
-        return matchTexto && (min === null || finalPrice >= min) && (max === null || finalPrice <= max);
+        
+        // Filtrar por precio original (base) en lugar de precio final
+        const pasaFiltroPrecio = (min === null || base >= min) && (max === null || base <= max);
+        
+        if (precioMin || precioMax) {
+          console.log('DEBUG - Producto:', p.nombre, {
+            precioOriginal: p.precio,
+            descuentoOriginal: p.descuento,
+            base,
+            disc,
+            finalPrice,
+            min,
+            max,
+            pasaFiltroPrecio,
+            matchTexto,
+            precioMinInput: precioMin,
+            precioMaxInput: precioMax,
+            condiciones: [
+              `min === null || base >= min: ${min === null || base >= min}`,
+              `max === null || base <= max: ${max === null || base <= max}`
+            ]
+          });
+        }
+        
+        return matchTexto && pasaFiltroPrecio;
       })
       .sort((a: any, b: any) => {
         const fp = (p: any) => {
           const base = Number(p.precio || 0);
           const d = Number(p.descuento || 0);
-          return d > 0 && d < 100 ? base * (1 - d / 100) : base;
+          return d > 0 && d < 100 ? Math.round(base * (1 - d / 100) * 100) / 100 : base;
         };
-        if (orden === "price-low") return fp(a) - fp(b);
-        if (orden === "price-high") return fp(b) - fp(a);
+        if (orden === "price-low") return Math.round(fp(a) * 100) / 100 - Math.round(fp(b) * 100) / 100;
+        if (orden === "price-high") return Math.round(fp(b) * 100) / 100 - Math.round(fp(a) * 100) / 100;
         if (orden === "newest" && a.createdAt && b.createdAt) return b.createdAt - a.createdAt;
         return 0;
       });

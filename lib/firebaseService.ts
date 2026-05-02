@@ -575,14 +575,28 @@ export const obtenerProductosUsuario = async (userId: string) => {
 };
 
 // Obtener productos de un usuario por categoría (usando el campo real de Firestore)
-export const obtenerProductosUsuarioPorCategoria = async (userId: string, categoria: string, excludeId = null, opts = {}) => {
+export const obtenerProductosUsuarioPorCategoria = async (userId: string, categoria: string, tiendaId?: string, excludeId = null, opts = {}) => {
+  console.log('DEBUG FIREBASE - obtenerProductosUsuarioPorCategoria:', { userId, categoria, tiendaId });
   try {
-    const q = query(
+    let q = query(
       collection(db, "productos"), 
       where("usuarioId", "==", userId),
       where("categoria", "==", categoria)
     );
+    
+    // Si se proporciona tiendaId, agregar filtro para productos nuevos
+    if (tiendaId) {
+      console.log('DEBUG FIREBASE - Agregando filtro tiendaId:', tiendaId);
+      q = query(
+        collection(db, "productos"), 
+        where("usuarioId", "==", userId),
+        where("categoria", "==", categoria),
+        where("tiendaId", "==", tiendaId)
+      );
+    }
+    console.log('DEBUG FIREBASE - Query creada con filtros: usuarioId, categoria y tiendaId');
     const snapshot = await getDocs(q);
+    console.log('DEBUG FIREBASE - Snapshot obtenido, documentos encontrados:', snapshot.docs.length);
     let productos = snapshot.docs.map(doc => {
       const data = doc.data();
       const producto = { id: doc.id, ...data };
@@ -615,7 +629,7 @@ export const obtenerProductosUsuarioPorCategoria = async (userId: string, catego
 };
 
 // Obtener productos de un usuario por subcategoría
-export const obtenerProductosUsuarioPorSubcategoria = async (userId: string, subcategoria: string, categoria: string = null, excludeId = null, opts = {}) => {
+export const obtenerProductosUsuarioPorSubcategoria = async (userId: string, subcategoria: string, categoria: string = null, tiendaId?: string, excludeId = null, opts = {}) => {
   try {
     let q;
     if (categoria) {
@@ -626,6 +640,17 @@ export const obtenerProductosUsuarioPorSubcategoria = async (userId: string, sub
         where("subcategoria", "==", subcategoria),
         where("categoria", "==", categoria)
       );
+      
+      // Si se proporciona tiendaId, agregar filtro
+      if (tiendaId) {
+        q = query(
+          collection(db, "productos"), 
+          where("usuarioId", "==", userId),
+          where("subcategoria", "==", subcategoria),
+          where("categoria", "==", categoria),
+          where("tiendaId", "==", tiendaId)
+        );
+      }
     } else {
       // Si no, solo filtrar por subcategoría
       q = query(
@@ -633,6 +658,16 @@ export const obtenerProductosUsuarioPorSubcategoria = async (userId: string, sub
         where("usuarioId", "==", userId),
         where("subcategoria", "==", subcategoria)
       );
+      
+      // Si se proporciona tiendaId, agregar filtro
+      if (tiendaId) {
+        q = query(
+          collection(db, "productos"), 
+          where("usuarioId", "==", userId),
+          where("subcategoria", "==", subcategoria),
+          where("tiendaId", "==", tiendaId)
+        );
+      }
     }
     
     const snapshot = await getDocs(q);
@@ -668,7 +703,7 @@ export const obtenerProductosUsuarioPorSubcategoria = async (userId: string, sub
 };
 
 // Obtener productos de un usuario por subsubcategoría
-export const obtenerProductosUsuarioPorSubsubcategoria = async (userId: string, subsubcategoria: string, subcategoria: string = null, categoria: string = null, excludeId = null, opts = {}) => {
+export const obtenerProductosUsuarioPorSubsubcategoria = async (userId: string, subsubcategoria: string, subcategoria: string = null, categoria: string = null, tiendaId?: string, excludeId = null, opts = {}) => {
   try {
     let q;
     if (categoria && subcategoria) {
@@ -680,6 +715,18 @@ export const obtenerProductosUsuarioPorSubsubcategoria = async (userId: string, 
         where("subcategoria", "==", subcategoria),
         where("categoria", "==", categoria)
       );
+      
+      // Si se proporciona tiendaId, agregar filtro
+      if (tiendaId) {
+        q = query(
+          collection(db, "productos"), 
+          where("usuarioId", "==", userId),
+          where("subsubcategoria", "==", subsubcategoria),
+          where("subcategoria", "==", subcategoria),
+          where("categoria", "==", categoria),
+          where("tiendaId", "==", tiendaId)
+        );
+      }
     } else if (subcategoria) {
       // Si solo se proporciona subcategoría
       q = query(
@@ -688,6 +735,17 @@ export const obtenerProductosUsuarioPorSubsubcategoria = async (userId: string, 
         where("subsubcategoria", "==", subsubcategoria),
         where("subcategoria", "==", subcategoria)
       );
+      
+      // Si se proporciona tiendaId, agregar filtro
+      if (tiendaId) {
+        q = query(
+          collection(db, "productos"), 
+          where("usuarioId", "==", userId),
+          where("subsubcategoria", "==", subsubcategoria),
+          where("subcategoria", "==", subcategoria),
+          where("tiendaId", "==", tiendaId)
+        );
+      }
     } else {
       // Si solo se proporciona subsubcategoría
       q = query(
@@ -695,6 +753,16 @@ export const obtenerProductosUsuarioPorSubsubcategoria = async (userId: string, 
         where("usuarioId", "==", userId),
         where("subsubcategoria", "==", subsubcategoria)
       );
+      
+      // Si se proporciona tiendaId, agregar filtro
+      if (tiendaId) {
+        q = query(
+          collection(db, "productos"), 
+          where("usuarioId", "==", userId),
+          where("subsubcategoria", "==", subsubcategoria),
+          where("tiendaId", "==", tiendaId)
+        );
+      }
     }
     
     const snapshot = await getDocs(q);
