@@ -2,13 +2,13 @@
 import React, { useState } from "react";
 import { uploadImageAndGetUrl } from "@/lib/upload-image";
 import { obtenerCategoriasUsuario } from "@/lib/categorias-db";
-import { obtenerProductosUsuario } from "@/lib/firebaseService";
+import { obtenerProductosUsuario, obtenerTiendasUsuario } from "@/lib/firebaseService";
 import { useEffect } from "react";
 import { obtenerMarcasUsuario } from "@/lib/marcas-db";
 import { obtenerBodegasUsuario } from "@/lib/bodegas-db";
 import { useAuth } from "@/lib/AuthContext";
 import { useTheme } from "@/lib/ThemeContext";
-import { useTienda } from "@/lib/TiendaContext";
+import { useTiendaContext } from "@/lib/TiendaContext";
 
 // Componente de formulario para crear/modificar productos
 type Producto = {
@@ -37,7 +37,21 @@ export default function ProductoForm({ initialData = null, onSave, onCancel }: P
     const [loading, setLoading] = useState(false);
     const { usuario } = useAuth();
     const { currentColors } = useTheme();
-    const { tiendaActual } = useTienda();
+    const { tienda } = useTiendaContext();
+    const [tiendaActual, setTiendaActual] = useState<any>(null);
+    const [tiendas, setTiendas] = useState<any[]>([]);
+
+    // Cargar tiendas del usuario
+    useEffect(() => {
+      if (usuario?.uid) {
+        obtenerTiendasUsuario(usuario.uid).then((tiendasData) => {
+          setTiendas(tiendasData);
+          if (tiendasData.length > 0) {
+            setTiendaActual(tiendasData[0]);
+          }
+        });
+      }
+    }, [usuario?.uid]);
   // Si initialData existe, es edición, si no, es creación
   const isEdit = !!initialData;
   const [nombre, setNombre] = useState<string>(initialData?.nombre || "");

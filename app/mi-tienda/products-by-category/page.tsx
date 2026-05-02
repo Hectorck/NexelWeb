@@ -15,7 +15,7 @@ import { obtenerCategoriasUsuario } from "@/lib/categorias-db";
 import { useAuth } from "@/lib/AuthContext";
 import { useTheme } from "@/lib/ThemeContext";
 import { useUser } from "../../context/UserContext";
-import { useTienda } from "@/lib/TiendaContext";
+import { useTiendaContext } from "@/lib/TiendaContext";
 
 export default function ProductsByCategoryPage() {
   const searchParams = useSearchParams();
@@ -23,7 +23,7 @@ export default function ProductsByCategoryPage() {
   const { usuario, loading: authLoading } = useAuth();
   const { currentColors } = useTheme();
   const { addCarrito, removeCarrito, carrito } = useUser();
-  const { tiendaActual } = useTienda();
+  const { tienda } = useTiendaContext();
 
   const categoria = (searchParams?.get("cat") || searchParams?.get("category") || "").trim();
   const subcategoria = (searchParams?.get("subcat") || searchParams?.get("subcategory") || searchParams?.get("sub") || "").trim();
@@ -212,9 +212,9 @@ export default function ProductsByCategoryPage() {
 
   useEffect(() => {
     async function fetchCategorias() {
-      if (!tiendaActual || !usuario) return;
+      if (!tiendas.length || !usuario) return;
       
-      const cats = await obtenerCategoriasUsuario(usuario.uid, tiendaActual.id);
+      const cats = await obtenerCategoriasUsuario(usuario.uid, tiendas[0].id);
       const catObj: any = {};
       const subcatObj: any = {};
       const subsubcatObj: any = {};
@@ -236,7 +236,7 @@ export default function ProductsByCategoryPage() {
       setSubsubcatMap(subsubcatObj);
     }
     fetchCategorias();
-  }, [tiendaActual, usuario]);
+  }, [tiendas, usuario]);
 
   function getCategoryName(id: string) {
     return catMap[id] || id;
