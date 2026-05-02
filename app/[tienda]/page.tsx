@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback, use } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/AuthContext";
@@ -14,12 +14,12 @@ import { obtenerCategorias, obtenerCategoriasUsuario } from "@/lib/categorias-db
 import { Tienda } from "@/lib/types";
 import type { Producto } from "@/lib/productos-db";
 
-export default function PreClienteDashboard({ params }: { params: { tienda: string } }) {
+export default function PreClienteDashboard({ params }: { params: Promise<{ tienda: string }> }) {
   const router = useRouter();
   const { usuario, loading } = useAuth();
   const { currentColors } = useTheme();
   const { addCarrito } = useUser();
-  const tiendaSlug = params.tienda;
+  const tiendaSlug = use(params).tienda;
 
   const [tiendas, setTiendas] = useState<Tienda[]>([]);
   const [loadingData, setLoadingData] = useState(true);
@@ -66,7 +66,7 @@ export default function PreClienteDashboard({ params }: { params: { tienda: stri
         setTiendaActual(tiendaActualData);
         
         const [productosData, categoriasData, logoUrl] = await Promise.all([
-          obtenerProductosUsuario(usuario!.uid),
+          obtenerProductos(usuario!.uid, tiendaActualData.id),
           obtenerCategoriasUsuario(usuario!.uid, tiendaActualData.id),
           obtenerLogo(usuario!.uid),
         ]);
@@ -77,10 +77,9 @@ export default function PreClienteDashboard({ params }: { params: { tienda: stri
         const configured = !!logoUrl && categoriasData?.length > 0 && productosData?.length > 0;
         setAllConfigured(configured);
         
-        if (logoUrl) {
-          await cargarProductosTienda();
-          await cargarCategorias();
-        }
+        // Cargar productos y categorías independientemente del logo
+        await cargarProductosTienda(tiendaActualData);
+        await cargarCategorias(tiendaActualData);
       }
     } catch (error) {
       console.error("Error cargando datos:", error);
@@ -89,10 +88,10 @@ export default function PreClienteDashboard({ params }: { params: { tienda: stri
     }
   };
 
-  const cargarProductosTienda = async () => {
+  const cargarProductosTienda = async (tiendaData: Tienda) => {
     setProductosLoading(true);
     try {
-      const data = await obtenerProductos();
+      const data = await obtenerProductos(usuario!.uid, tiendaData.id);
       setProductos(data || []);
     } catch (error) {
       console.error("Error cargando productos:", error);
@@ -102,11 +101,9 @@ export default function PreClienteDashboard({ params }: { params: { tienda: stri
     }
   };
 
-  const cargarCategorias = async () => {
+  const cargarCategorias = async (tiendaData: Tienda) => {
     try {
-      if (!tiendaActual) return;
-      
-      const cats = await obtenerCategoriasUsuario(usuario!.uid, tiendaActual.id);
+      const cats = await obtenerCategoriasUsuario(usuario!.uid, tiendaData.id);
       const catObj: any = {};
       const subcatObj: any = {};
       const subsubcatObj: any = {};
@@ -235,7 +232,7 @@ export default function PreClienteDashboard({ params }: { params: { tienda: stri
     );
   }
 
-  const mostrarTienda = tiendas.length > 0 && hasLogo && !loadingData && !showDashboard;
+  const mostrarTienda = tiendas.length > 0 && !loadingData && !showDashboard;
 
   return (
     <div style={{ backgroundColor: currentColors.bgPrimary, color: currentColors.textPrimary }} className="min-h-screen">

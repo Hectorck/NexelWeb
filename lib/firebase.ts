@@ -16,6 +16,12 @@ const firebaseConfig = {
 export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
-export const storage = getStorage(app);
+// Usar el bucket de Storage estándar de Firebase
+const storageBucket = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || 
+  `${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID}.appspot.com`;
+
+export const storage = getStorage(app, storageBucket);
+
+console.log('Firebase Storage - Bucket:', storageBucket);
 
 

@@ -10,10 +10,12 @@ import {
   actualizarProducto,
   eliminarProducto,
 } from "@/lib/productos-db";
-import { obtenerProductosUsuario, obtenerTiendasUsuario } from "@/lib/firebaseService";
+import { obtenerTiendasUsuario } from "@/lib/firebaseService";
+import { obtenerProductos } from "@/lib/productos-db";
 import { useAuth } from "@/lib/AuthContext";
 import { useTheme } from "@/lib/ThemeContext";
 import { crearBodegaDefaultUsuario } from "@/lib/bodegas-db";
+import { useParams } from "next/navigation";
 
 type FiltroStock = "todos" | "con-stock" | "poco-stock" | "sin-stock";
 type Vista = "productos" | "marcas" | "categorias" | "bodegas";
@@ -21,6 +23,8 @@ type Vista = "productos" | "marcas" | "categorias" | "bodegas";
 export default function AdminInventario() {
   const { usuario } = useAuth();
   const { currentColors } = useTheme();
+  const params = useParams();
+  const tiendaId = params.tienda as string;
 
   const [showForm, setShowForm] = useState(false);
   const [editData, setEditData] = useState<Producto | null>(null);
@@ -45,32 +49,11 @@ export default function AdminInventario() {
     return { total, conStock, pocoStock, sinStock };
   }, [productos]);
 
-  // Cargar tiendas del usuario
-  useEffect(() => {
-    if (!usuario?.uid) return;
-    const cargarTiendas = async () => {
-      setTiendaLoading(true);
-      try {
-        const tiendasData = await obtenerTiendasUsuario(usuario.uid);
-        setTiendas(tiendasData);
-      } catch (err) {
-        console.error("Error cargando tiendas:", err);
-      } finally {
-        setTiendaLoading(false);
-      }
-    };
-    cargarTiendas();
-  }, [usuario?.uid]);
-
   useEffect(() => {
     if (!usuario?.uid) return;
     crearBodegaDefaultUsuario(usuario.uid).catch(console.error);
     cargarProductos();
   }, [usuario?.uid]);
-
-  // Obtener la tienda actual (la primera por ahora)
-  const tiendaActual = tiendas.length > 0 ? tiendas[0] : null;
-  const tiendaId = tiendaActual?.id;
 
   if (!usuario || !currentColors) {
     return (
@@ -87,7 +70,7 @@ export default function AdminInventario() {
     if (!usuario?.uid) return;
     setLoading(true);
     try {
-      const prods = await obtenerProductosUsuario(usuario.uid);
+      const prods = await obtenerProductos(usuario.uid, tiendaId);
       setProductos(
         (prods as Producto[]).map((p) => ({
           ...p,
@@ -274,6 +257,7 @@ export default function AdminInventario() {
             <ProductoFormModal
               show={showForm}
               initialData={editData}
+              tiendaId={tiendaId}
               onClose={() => { setShowForm(false); setEditData(null); }}
               onSave={async (data) => {
                 try {

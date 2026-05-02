@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useState, useEffect, useMemo, useCallback, useLayoutEffect, useRef, useReducer, useDebugValue, useDeferredValue, useTransition, useId, useInsertionEffect, useSyncExternalStore, use } from "react";
 import Link from "next/link";
 import { Icons, getCategoryIcon } from "./Icons";
 import { collection, onSnapshot, query, orderBy, where } from "firebase/firestore";
@@ -11,6 +11,7 @@ import { useAuth } from "@/lib/AuthContext";
 import { useTheme } from "@/lib/ThemeContext";
 import { useUser } from "../context/UserContext";
 import { useTiendaRoutes } from "@/lib/useTiendaRoutes";
+import { useParams } from "next/navigation";
 
 // ─────────────────────────────────────────────
 // Acordeón de categorías para el drawer móvil
@@ -38,7 +39,7 @@ function MobileCategoriesAccordion({ basePath, usuario, tiendaActual, currentCol
     const unsub = onSnapshot(
       query(collection(db, "categorias"),
         where("usuarioId", "==", usuario.uid),
-        where("tiendaId", "==", tiendaActual.id)
+        where("tiendaId", "==", tiendaActual)
       ),
       (snap) => {
         const cats = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
@@ -169,6 +170,12 @@ export const Navbar = () => {
   const { user, usuario, isAuthenticated } = useAuth();
   const { currentColors } = useTheme();
   const { user: userFromContext, carrito } = useUser();
+  const params = useParams();
+  const tiendaId = params.tienda as string;
+  
+    
+  // Fallback: Si no hay tiendaId, usar undefined (se manejará en el useEffect)
+  const effectiveTiendaId = tiendaId;
   
   const [mounted, setMounted] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -200,6 +207,11 @@ export const Navbar = () => {
 
   useEffect(() => { setMounted(true); }, []);
 
+// Debug logoUrl changes
+useEffect(() => {
+  console.log("🔍 Navbar - logoUrl actualizado:", logoUrl);
+}, [logoUrl]);
+
   // Cargar tiendas
   useEffect(() => {
     if (usuario?.uid) {
@@ -214,7 +226,11 @@ export const Navbar = () => {
 
   // Escuchar categorías desde Firestore con aislamiento
   useEffect(() => {
-    if (!tiendaActual || !usuario) return;
+    const tiendaIdToUse = tiendaActual?.id || tiendas[0]?.id || effectiveTiendaId;
+    
+    if (!tiendaIdToUse || !usuario) {
+      return;
+    }
     
     const sortByOrder = (items: any[]): any[] => {
       return items
@@ -228,7 +244,7 @@ export const Navbar = () => {
     const unsub = onSnapshot(
       query(collection(db, "categorias"),
         where("usuarioId", "==", usuario.uid),
-        where("tiendaId", "==", tiendaActual.id)
+        where("tiendaId", "==", tiendaIdToUse)
       ),
       (snap) => {
         const cats = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
@@ -236,7 +252,7 @@ export const Navbar = () => {
       }
     );
     return () => unsub();
-  }, [tiendaActual, usuario]);
+  }, [effectiveTiendaId, tiendaActual, tiendas, usuario]);
 
   // Cargar redes sociales del usuario
   useEffect(() => {
@@ -250,9 +266,12 @@ export const Navbar = () => {
   // Cargar logo del usuario
   useEffect(() => {
     if (user?.uid) {
+      console.log('Navbar - Cargando logo para usuario:', user.uid);
       obtenerLogo(user.uid).then((logo) => {
+        console.log('Navbar - Logo obtenido:', logo);
         setLogoUrl(logo);
-      }).catch(() => {
+      }).catch((error) => {
+        console.log('Navbar - Error cargando logo:', error);
         setLogoUrl(null);
       });
     }
@@ -361,20 +380,34 @@ export const Navbar = () => {
               style={{ color: currentColors?.textPrimary || '#1f2937' }}
             >
               {logoUrl ? (
-                <img 
-                  src={logoUrl} 
-                  alt="Logo de la tienda" 
-                  className="h-10 w-auto object-contain"
-                  onError={(e) => {
-                    // Si la imagen falla, mostrar texto por defecto
-                    const target = e.target as HTMLImageElement;
-                    target.style.display = 'none';
-                  }}
-                />
-              ) : null}
-              <span className={logoUrl ? 'hidden' : ''}>
-                MI-TIENDA
-              </span>
+                <>
+                  <img 
+                    src={logoUrl} 
+                    alt="Logo de la tienda" 
+                    className="h-10 w-auto object-contain"
+                    onError={(e) => {
+                      console.log('Navbar - Error cargando imagen de logo:', logoUrl);
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = 'none';
+                      // Mostrar el span cuando la imagen falla
+                      const span = target.nextElementSibling as HTMLElement;
+                      if (span) {
+                        span.classList.remove('hidden');
+                      }
+                    }}
+                    onLoad={() => {
+                      console.log('Navbar - Logo cargado exitosamente:', logoUrl);
+                    }}
+                  />
+                  <span className="hidden">
+                    MI-TIENDA
+                  </span>
+                </>
+              ) : (
+                <span>
+                  MI-TIENDA
+                </span>
+              )}
             </a>
 
                       </div>
@@ -829,7 +862,7 @@ export const Navbar = () => {
               ))}
 
               {/* Categorías en acordeón */}
-              <MobileCategoriesAccordion basePath={basePath} usuario={usuario} tiendaActual={tiendaActual} currentColors={currentColors} />
+              <MobileCategoriesAccordion basePath={basePath} usuario={usuario} tiendaActual={tiendaId} currentColors={currentColors} />
 
               {/* Divisor */}
               <div className="border-t my-2" style={{ borderColor: currentColors?.borderColor || '#e5e7eb' }} />

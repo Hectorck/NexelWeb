@@ -2,12 +2,13 @@
 import React, { useState } from "react";
 import { uploadImageAndGetUrl } from "@/lib/upload-image";
 import { obtenerCategoriasUsuario } from "@/lib/categorias-db";
-import { obtenerProductosUsuario } from "@/lib/firebaseService";
+import { obtenerProductos } from "@/lib/productos-db";
 import { useEffect } from "react";
 import { obtenerMarcasUsuario } from "@/lib/marcas-db";
 import { obtenerBodegasUsuario } from "@/lib/bodegas-db";
 import { useAuth } from "@/lib/AuthContext";
 import { useTheme } from "@/lib/ThemeContext";
+import { useParams } from "next/navigation";
 
 // Componente de formulario para crear/modificar productos
 type Producto = {
@@ -29,9 +30,10 @@ type Producto = {
 type ProductoFormProps = {
   initialData?: Producto | null;
   onSave?: (data: Producto) => void;
+  tiendaId?: string;
 };
 
-export default function ProductoForm({ initialData = null, onSave, onCancel }: ProductoFormProps) {
+export default function ProductoForm({ initialData = null, onSave, onCancel, tiendaId }: ProductoFormProps) {
     // Estado de carga para el submit
     const [loading, setLoading] = useState(false);
     const { usuario } = useAuth();
@@ -80,9 +82,16 @@ export default function ProductoForm({ initialData = null, onSave, onCancel }: P
   // Categorías dinámicas desde Firestore
   const [categoriasDb, setCategoriasDb] = useState<any[]>([]);
   useEffect(() => {
-    if (!usuario?.uid) return;
-    obtenerCategoriasUsuario(usuario.uid).then(setCategoriasDb);
-  }, [usuario?.uid]);
+    console.log('ProductoForm - usuario?.uid:', usuario?.uid, 'tiendaId:', tiendaId);
+    if (!usuario?.uid || !tiendaId) {
+      console.log('ProductoForm - No se pueden cargar categorías, faltan datos');
+      return;
+    }
+    obtenerCategoriasUsuario(usuario.uid, tiendaId).then(categorias => {
+      console.log('ProductoForm - Categorías cargadas:', categorias.length, categorias);
+      setCategoriasDb(categorias);
+    });
+  }, [usuario?.uid, tiendaId]);
 
   // Selectores dependientes dinámicos
   const categorias = categoriasDb.map((cat: any) => ({
@@ -154,7 +163,7 @@ export default function ProductoForm({ initialData = null, onSave, onCancel }: P
         console.error("Usuario no autenticado");
         return undefined;
       }
-      const todos = await obtenerProductosUsuario(usuario.uid);
+      const todos = await obtenerProductos(usuario.uid);
 
       // Determinar el id de la última categoría seleccionada
       const finalCategoriaId = subsubcategoria || subcategoria || categoria;

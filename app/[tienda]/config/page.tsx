@@ -313,9 +313,17 @@ export default function ConfigPage() {
 
     setLogoSaving(true);
     try {
+      console.log('Logo Upload - Starting upload for user:', usuario.uid);
+      console.log('Logo Upload - File:', logoFile.name, 'Size:', logoFile.size);
+      
       const storageRef = ref(storage, `logos/${usuario.uid}/${Date.now()}_${logoFile.name}`);
+      console.log('Logo Upload - Storage ref created:', storageRef.fullPath);
+      
       await uploadBytes(storageRef, logoFile);
+      console.log('Logo Upload - File uploaded successfully');
+      
       const downloadURL = await getDownloadURL(storageRef);
+      console.log('Logo Upload - Download URL obtained:', downloadURL);
       
       // Guardar URL en Firestore
       const { actualizarLogo } = await import("@/lib/firebaseService");
@@ -325,8 +333,15 @@ export default function ConfigPage() {
       setLogoFile(null);
       setTimeout(() => setMessage(""), 3000);
     } catch (error) {
-      setMessage("✗ Error al subir logo");
-      setTimeout(() => setMessage(""), 3000);
+      console.error('Logo Upload - Error:', error);
+      console.error('Logo Upload - Error details:', {
+        message: error?.message,
+        code: error?.code,
+        serverResponse: error?.customData?.serverResponse,
+        name: error?.name
+      });
+      setMessage("✗ Error al subir logo: " + (error?.message || 'Error desconocido'));
+      setTimeout(() => setMessage(""), 5000);
     } finally {
       setLogoSaving(false);
     }

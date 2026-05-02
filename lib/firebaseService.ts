@@ -12,6 +12,8 @@ import {
   QueryConstraint,
 } from "firebase/firestore";
 import { db, auth, storage } from "./firebase";
+import { getStorage } from "firebase/storage";
+import { app } from "./firebase";
 import { Usuario, PreCliente, Cliente, Tienda, TiendaLimites } from "./types";
 import { emailsCoinciden, normalizarEmail } from "./email";
 import {
@@ -742,10 +744,24 @@ export const obtenerCategoriasUsuario = async () => {
 
 export const obtenerLogo = async (userId: string): Promise<string | null> => {
   try {
-    const { ref, getDownloadURL } = await import("firebase/storage");
-    const logoRef = ref(storage, `logos/${userId}/logo`);
-    return await getDownloadURL(logoRef);
+    console.log('obtenerLogo - Buscando logo para usuario:', userId);
+    
+    // Obtener el logoUrl desde Firestore (donde se guarda con actualizarLogo)
+    const userDoc = await getDoc(doc(db, "usuarios", userId));
+    console.log('obtenerLogo - Documento existe:', userDoc.exists());
+    
+    if (userDoc.exists()) {
+      const userData = userDoc.data();
+      console.log('obtenerLogo - Datos usuario:', userData);
+      const logoUrl = userData.logoUrl || null;
+      console.log('obtenerLogo - LogoUrl encontrado:', logoUrl);
+      return logoUrl;
+    } else {
+      console.log('obtenerLogo - Documento de usuario no encontrado');
+      return null;
+    }
   } catch (error) {
+    console.error('obtenerLogo - Error:', error);
     return null;
   }
 };
@@ -801,6 +817,36 @@ export const actualizarUbicacion = async (userId: string, ubicacion: Ubicacion):
     });
   } catch (error) {
     console.error("Error actualizar ubicación:", error);
+  }
+};
+
+export const actualizarLogo = async (userId: string, logoUrl: string): Promise<void> => {
+  try {
+    console.log('actualizarLogo - Iniciando actualización:', { userId, logoUrl });
+    
+    // Verificar que el documento existe antes de actualizar
+    const userDoc = await getDoc(doc(db, "usuarios", userId));
+    console.log('actualizarLogo - Documento usuario existe:', userDoc.exists());
+    
+    if (userDoc.exists()) {
+      console.log('actualizarLogo - Datos actuales:', userDoc.data());
+      
+      await updateDoc(doc(db, "usuarios", userId), {
+        logoUrl: logoUrl,
+      });
+      
+      console.log('actualizarLogo - Actualización exitosa');
+      
+      // Verificar que se guardó correctamente
+      const updatedDoc = await getDoc(doc(db, "usuarios", userId));
+      console.log('actualizarLogo - Datos después de actualizar:', updatedDoc.data());
+      
+    } else {
+      console.error('actualizarLogo - Documento de usuario no encontrado');
+    }
+  } catch (error) {
+    console.error("actualizarLogo - Error detallado:", error);
+    throw error;
   }
 };
 

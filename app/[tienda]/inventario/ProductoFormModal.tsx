@@ -2,7 +2,8 @@
 import React from "react";
 import ProductoForm from "./ProductoForm";
 
-export default function ProductoFormModal({ show, onClose, initialData, onSave }) {
+export default function ProductoFormModal({ show, onClose, initialData, onSave, tiendaId }) {
+  console.log('ProductoFormModal - tiendaId:', tiendaId);
   if (!show) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-purple-900/80 via-black/70 to-slate-900/90 backdrop-blur-sm">
@@ -30,6 +31,7 @@ export default function ProductoFormModal({ show, onClose, initialData, onSave }
           <ProductoForm
             initialData={initialData}
             onSave={onSave}
+            tiendaId={tiendaId}
             onCancel={onClose}
           />
         </div>

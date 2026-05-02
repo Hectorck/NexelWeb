@@ -8,6 +8,7 @@ import { obtenerMarcasUsuario } from "@/lib/marcas-db";
 import { obtenerBodegasUsuario } from "@/lib/bodegas-db";
 import { useAuth } from "@/lib/AuthContext";
 import { useTheme } from "@/lib/ThemeContext";
+import { useTienda } from "@/lib/TiendaContext";
 
 // Componente de formulario para crear/modificar productos
 type Producto = {
@@ -36,6 +37,7 @@ export default function ProductoForm({ initialData = null, onSave, onCancel }: P
     const [loading, setLoading] = useState(false);
     const { usuario } = useAuth();
     const { currentColors } = useTheme();
+    const { tiendaActual } = useTienda();
   // Si initialData existe, es edición, si no, es creación
   const isEdit = !!initialData;
   const [nombre, setNombre] = useState<string>(initialData?.nombre || "");
@@ -80,9 +82,9 @@ export default function ProductoForm({ initialData = null, onSave, onCancel }: P
   // Categorías dinámicas desde Firestore
   const [categoriasDb, setCategoriasDb] = useState<any[]>([]);
   useEffect(() => {
-    if (!usuario?.uid) return;
-    obtenerCategoriasUsuario(usuario.uid).then(setCategoriasDb);
-  }, [usuario?.uid]);
+    if (!usuario?.uid || !tiendaActual?.id) return;
+    obtenerCategoriasUsuario(usuario.uid, tiendaActual.id).then(setCategoriasDb);
+  }, [usuario?.uid, tiendaActual?.id]);
 
   // Selectores dependientes dinámicos
   const categorias = categoriasDb.map((cat: any) => ({

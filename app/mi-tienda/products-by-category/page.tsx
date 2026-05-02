@@ -15,6 +15,7 @@ import { obtenerCategoriasUsuario } from "@/lib/categorias-db";
 import { useAuth } from "@/lib/AuthContext";
 import { useTheme } from "@/lib/ThemeContext";
 import { useUser } from "../../context/UserContext";
+import { useTienda } from "@/lib/TiendaContext";
 
 export default function ProductsByCategoryPage() {
   const searchParams = useSearchParams();
@@ -22,13 +23,13 @@ export default function ProductsByCategoryPage() {
   const { usuario, loading: authLoading } = useAuth();
   const { currentColors } = useTheme();
   const { addCarrito, removeCarrito, carrito } = useUser();
+  const { tiendaActual } = useTienda();
 
   const categoria = (searchParams?.get("cat") || searchParams?.get("category") || "").trim();
   const subcategoria = (searchParams?.get("subcat") || searchParams?.get("subcategory") || searchParams?.get("sub") || "").trim();
   const subsubcategoria = (searchParams?.get("subsubcat") || searchParams?.get("subsubcategory") || searchParams?.get("subsub") || "").trim();
 
   const [tiendas, setTiendas] = useState<any[]>([]);
-  const [tiendaActual, setTiendaActual] = useState<any>(null);
   const [productos, setProductos] = useState<Producto[]>([]);
   const [loadingData, setLoadingData] = useState(false);
   const [search, setSearch] = useState("");

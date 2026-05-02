@@ -160,7 +160,7 @@ export async function crearProducto(producto: Producto): Promise<Producto> {
 
 // Obtener todos los productos
 // Si opts.incluirSinStock es true, no filtra por stock (solo para admin/inventario)
-export async function obtenerProductos(opts = {}) {
+export async function obtenerProductos(usuarioId: string, tiendaId?: string, opts = {}) {
   const snapshot = await getDocs(collection(db, COLLECTION));
   let productos = snapshot.docs.map(doc => {
     const data = doc.data();

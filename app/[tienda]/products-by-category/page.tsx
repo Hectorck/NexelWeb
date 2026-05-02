@@ -1,5 +1,5 @@
 "use client";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useParams } from "next/navigation";
 import { useRouter } from "next/navigation";
 import ProductoCard from "../../components/ProductoCard";
 import { useEffect, useState, useMemo, useCallback } from "react";
@@ -19,6 +19,8 @@ import { useUser } from "../../context/UserContext";
 export default function ProductsByCategoryPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const params = useParams();
+  const tiendaId = params.tienda as string;
   const { usuario, loading: authLoading } = useAuth();
   const { currentColors } = useTheme();
   const { addCarrito, removeCarrito, carrito } = useUser();
@@ -237,9 +239,9 @@ export default function ProductsByCategoryPage() {
 
   useEffect(() => {
     async function fetchCategorias() {
-      if (!tiendaActual) return;
+      if (!tiendaId) return;
       
-      const cats = await obtenerCategoriasUsuario(usuario!.uid, tiendaActual.id);
+      const cats = await obtenerCategoriasUsuario(usuario!.uid, tiendaId);
       const catObj: any = {};
       const subcatObj: any = {};
       const subsubcatObj: any = {};
@@ -261,7 +263,7 @@ export default function ProductsByCategoryPage() {
       setSubsubcatMap(subsubcatObj);
     }
     fetchCategorias();
-  }, [tiendaActual, usuario]);
+  }, [tiendaId, usuario]);
 
   function getCategoryName(id: string) {
     return catMap[id] || id;
