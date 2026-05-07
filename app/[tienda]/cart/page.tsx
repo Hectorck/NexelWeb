@@ -120,21 +120,12 @@ export default function CartPage() {
 		// Quiero confirmar disponibilidad y conocer más detalles. ¡Gracias!
 		let mensaje = "Hola, Me gustaría realizar una compra:\n\n";
 		
-		carrito.forEach((item, index) => {
-			// Nombre del producto en mayúsculas
+		carrito.forEach((item) => {
+			// Solo nombre en mayúsculas y descripción
 			mensaje += `${item.nombre.toUpperCase()}`;
-			
-			// Agregar especificaciones técnicas si existen
-			const especificaciones = [];
-			if (item.descripcion) especificaciones.push(item.descripcion);
-			if (item.marca) especificaciones.push(item.marca);
-			if (item.categoria) especificaciones.push(item.categoria);
-			
-			if (especificaciones.length > 0) {
-				mensaje += ` ${especificaciones.join(' ')}`;
+			if (item.descripcion) {
+				mensaje += ` | ${item.descripcion}`;
 			}
-			
-			// Agregar cantidad
 			mensaje += ` (Cantidad: ${item.cantidad})\n`;
 		});
 
@@ -146,7 +137,8 @@ export default function CartPage() {
 
 		// Codificar mensaje para URL
 		const mensajeCodificado = encodeURIComponent(mensaje);
-		const whatsappUrl = `https://wa.me/${redesSociales.whatsapp}?text=${mensajeCodificado}`;
+		const numeroLimpio = redesSociales.whatsapp.replace(/\D/g, "");
+		const whatsappUrl = `https://wa.me/${numeroLimpio}?text=${mensajeCodificado}`;
 
 		// Abrir WhatsApp
 		window.open(whatsappUrl, "_blank");
