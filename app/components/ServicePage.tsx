@@ -24,7 +24,7 @@ export default function ServicePage() {
   const plans: Plan[] = [
     {
       name: 'Plan Premium',
-      price: 350,
+      price: 250,
       description: 'Tienda virtual completa con todas las herramientas esenciales para administrar tu negocio online.',
       deliveryTime: '3-5 días laborales',
       features: [
@@ -44,7 +44,7 @@ export default function ServicePage() {
     },
     {
       name: 'Plan Avanzado',
-      price: 550,
+      price: 400,
       description: 'Todo lo del Plan Premium más cuenta para clientes con funcionalidades avanzadas de gestión.',
       deliveryTime: '7-10 días laborales',
       features: [
