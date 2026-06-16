@@ -44,6 +44,7 @@ export default function Header() {
         >
           <ul>
             <li><Link href="/" onClick={closeMenu}>Inicio</Link></li>
+            <li><Link href="/pages/proyectos" onClick={closeMenu}>Proyectos</Link></li>
             <li><Link href="/pages/aboutus" onClick={closeMenu}>Sobre Nosotros</Link></li>
             <li><Link href="/pages/service" onClick={closeMenu}>Servicio</Link></li>
             <li>
